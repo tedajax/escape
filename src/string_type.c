@@ -25,7 +25,7 @@ String *string_create(const char *cstr) {
 
 	size_t clen = strlen(cstr);
 
-	String *self = string_reserve(clen * 2);
+	String *self = string_reserve(clen);
 
 	for (size_t i = 0; i < clen; ++i) {
 		self->characters[i] = cstr[i];
