@@ -2,7 +2,7 @@ TARGET		= escape
 CC			= gcc
 CFLAGS		= -std=c99 -Wall -I. -g
 
-LINKER		= clang -o
+LINKER		= gcc -o
 LFLAGS		= -Wall -I. -lm
 
 SRCDIR		= src
