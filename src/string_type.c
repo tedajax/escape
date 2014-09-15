@@ -10,6 +10,12 @@ void string_free(String *self) {
 	free(self);
 }
 
+void string_free_void(void *pself) {
+	assert(pself);
+	String *self = (String *)pself;
+	string_free(self);
+}
+
 String *string_reserve(size_t capacity) {
 	String *self = calloc(1, sizeof(String));
 
@@ -153,7 +159,7 @@ void string_erase(String *self, size_t start, size_t end) {
 	self->length -= removeLen;
 }
 
-char * string_cStr(String *self) {
+char *string_cstr(String *self) {
 	string_assert(self);
 	
 	char *dest = calloc(self->length + 1, sizeof(char));
@@ -164,7 +170,7 @@ char * string_cStr(String *self) {
 void string_print(String *self) {
 	string_assert(self);
 
-	char *tmp = string_cStr(self);
+	char *tmp = string_cstr(self);
 	printf("%s\n", tmp);
 	free(tmp);
 }
@@ -197,7 +203,7 @@ void string_strim(String *self) {
 	}
 }
 
-int64_t string_charAt(String *self, char find) {
+int64_t string_charat(String *self, char find) {
 	string_assert(self);
 
 	for (int64_t i = 0; i < self->length; ++i) {
@@ -209,7 +215,7 @@ int64_t string_charAt(String *self, char find) {
 	return -1;
 }
 
-void string_toLower(String *self) {
+void string_tolower(String *self) {
 	string_assert(self);
 
 	for (size_t i = 0; i < self->length; ++i) {
@@ -220,7 +226,7 @@ void string_toLower(String *self) {
 	}
 }
 
-void string_toUpper(String *self) {
+void string_toupper(String *self) {
 	string_assert(self);
 
 	for (size_t i = 0; i < self->length; ++i) {
@@ -243,6 +249,35 @@ String *string_substring(String *self, size_t start, size_t end) {
 
 	for (size_t i = start; i <= end; ++i) {
 		result->characters[i - start] = self->characters[i];
+	}
+
+	result->length = resultLen;
+
+	return result;
+}
+
+Vector *string_split(String *self, char delimeter) {
+	string_assert(self);
+
+	Vector *result = vector_new(8);
+
+	size_t front = 0;
+	size_t back = 0;
+
+	while (front < self->length) {
+		bool foundDelim = false;
+		while (!foundDelim && back < self->length) {
+			if (self->characters[back] == delimeter) {
+				foundDelim = true;
+			} else {
+				++back;
+			}
+		}
+
+		String *sub = string_substring(self, front, back - 1);
+		vector_add(result, (void *)sub);
+		front = back + 1;
+		back = front;
 	}
 
 	return result;

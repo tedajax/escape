@@ -11,6 +11,20 @@ Vector *vector_new(u32 capacity) {
 	return self;
 }
 
+void vector_free(Vector *self) {
+	assert(self);
+	assert(self->freeFunc);
+
+	for (u32 i = 0; i < self->size; ++i) {
+		void *element = self->data[i];
+		self->freeFunc(element);
+	}
+
+	free(self->freeFunc);
+	free(self->data);
+	free(self);
+}
+
 void vector_setFreeFunc(Vector *self, free_func freeFunc) {
 	assert(self);
 	assert(freeFunc);
