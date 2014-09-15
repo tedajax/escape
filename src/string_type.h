@@ -29,7 +29,7 @@ void string_append(String *self, const char *cstr);
 void string_removeAt(String *self, size_t index);
 void string_erase(String *self, size_t start, size_t end);
 
-void string_cStr(String *self, char *dest);
+char *string_cStr(String *self);
 void string_print(String *self);
 
 void string_trim(String *self);

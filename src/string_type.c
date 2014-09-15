@@ -11,7 +11,7 @@ void string_free(String *self) {
 }
 
 String *string_reserve(size_t capacity) {
-	String *self = calloc(1, sizeof(String *));
+	String *self = calloc(1, sizeof(String));
 
 	self->length = 0;
 	self->capacity = capacity;
@@ -25,11 +25,13 @@ String *string_create(const char *cstr) {
 
 	size_t clen = strlen(cstr);
 
-	String *self = string_reserve(clen);
+	String *self = string_reserve(clen * 2);
 
 	for (size_t i = 0; i < clen; ++i) {
 		self->characters[i] = cstr[i];
 	}
+
+	self->length = clen;
 
 	return self;
 }
@@ -151,17 +153,20 @@ void string_erase(String *self, size_t start, size_t end) {
 	self->length -= removeLen;
 }
 
-void string_cStr(String *self, char *dest) {
+char * string_cStr(String *self) {
 	string_assert(self);
-	assert(dest);
-
+	
+	char *dest = calloc(self->length + 1, sizeof(char));
 	snprintf(dest, self->length, "%s", self->characters);
+	return dest;
 }
 
 void string_print(String *self) {
 	string_assert(self);
 
-	printf("%s\n", self->characters);
+	char *tmp = string_cStr(self);
+	printf("%s\n", tmp);
+	free(tmp);
 }
 
 void string_strim(String *self) {
@@ -242,8 +247,6 @@ String *string_substring(String *self, size_t start, size_t end) {
 
 	return result;
 }
-
-
 
 bool _char_is_whitespace(char c) {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\b' || c == '\r';
