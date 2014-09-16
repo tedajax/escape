@@ -160,11 +160,16 @@ void string_erase(String *self, size_t start, size_t end) {
 
 	size_t removeLen = (end - start) + 1;
 
-	for (size_t i = start + removeLen; i < self->length && i < end + removeLen; ++i) {
-		self->characters[i - removeLen] = self->characters[i];
+	for (size_t i = start; i < self->length; ++i) {
+		size_t remIndex = i + removeLen;
+		if (remIndex < self->length) {
+			self->characters[i] = self->characters[remIndex];
+		} else {
+			self->characters[i] = '\0';
+		}
 	}
 
-	self->length -= removeLen;
+	self->length -= (removeLen - 1);
 }
 
 char *string_cstr(String *self) {
@@ -199,17 +204,17 @@ void string_trim(String *self) {
 		string_erase(self, 0, cIndex - 1);
 	}
 
-	cIndex = self->length - 1;
-	whitespace = true;
+	// cIndex = self->length - 1;
+	// whitespace = true;
 
-	while (whitespace && cIndex >= 0) {
-		whitespace = _char_is_whitespace(self->characters[cIndex]);
-		if (whitespace) { --cIndex; }
-	}
+	// while (whitespace && cIndex >= 0) {
+	// 	whitespace = _char_is_whitespace(self->characters[cIndex]);
+	// 	if (whitespace) { --cIndex; }
+	// }
 
-	if (cIndex < self->length - 1) {
-		string_erase(self, cIndex, self->length - 1);
-	}
+	// if (cIndex < self->length - 1) {
+	// 	string_erase(self, cIndex, self->length - 1);
+	// }
 }
 
 int64_t string_charat(String *self, char find) {
