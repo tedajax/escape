@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
     string_free(test);
 
     String *subTest = S("123456789");
-    String *sub = string_substring(subTest, 0, 3);
+    String *sub = string_substring(subTest, 1, 3);
     string_print(sub);
     string_free(sub);
 

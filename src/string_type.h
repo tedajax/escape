@@ -9,7 +9,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
-#include "vector.h"
+
+typedef struct vector_t Vector;
 
 typedef struct string_t {
 	char *characters;

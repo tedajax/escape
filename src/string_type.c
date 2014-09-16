@@ -1,4 +1,5 @@
 #include "string_type.h"
+#include "vector.h"
 
 String *string_new() {
 	return string_reserve(16);
@@ -162,8 +163,9 @@ void string_erase(String *self, size_t start, size_t end) {
 char *string_cstr(String *self) {
 	string_assert(self);
 	
-	char *dest = calloc(self->length + 1, sizeof(char));
-	snprintf(dest, self->length, "%s", self->characters);
+	size_t slen = self->length + 1;
+	char *dest = calloc(slen, sizeof(char));
+	snprintf(dest, slen, "%s", self->characters);
 	return dest;
 }
 
@@ -244,7 +246,6 @@ String *string_substring(String *self, size_t start, size_t end) {
 	assert(end >= 0 && end < self->length);
 
 	size_t resultLen = (end - start) + 1;
-
 	String *result = string_reserve(resultLen);
 
 	for (size_t i = start; i <= end; ++i) {
