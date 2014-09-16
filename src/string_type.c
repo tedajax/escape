@@ -253,7 +253,7 @@ String *string_substring(String *self, size_t start, size_t end) {
 	assert(end >= 0 && end < self->length);
 
 	size_t resultLen = (end - start) + 1;
-	String *result = string_reserve(resultLen);
+	String *result = string_reserve(resultLen * 2);
 
 	for (size_t i = start; i <= end; ++i) {
 		result->characters[i - start] = self->characters[i];

@@ -20,7 +20,8 @@ void vector_free(Vector *self) {
 		self->freeFunc(element);
 	}
 
-	free(self->freeFunc);
+	self->freeFunc = NULL;
+
 	free(self->data);
 	free(self);
 }
