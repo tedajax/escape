@@ -32,7 +32,7 @@ String *string_create(const char *cstr) {
 
 	size_t clen = strlen(cstr);
 
-	String *self = string_reserve(clen);
+	String *self = string_reserve(clen + 1);
 
 	for (size_t i = 0; i < clen; ++i) {
 		self->characters[i] = cstr[i];
@@ -73,7 +73,12 @@ void string_resize(String *self, size_t capacity) {
 	}
 
 	for (size_t i = 0; i < oldCapacity; ++i) {
-		newChars[i] = self->characters[i];
+		char c = self->characters[i];
+		if (c != '\0') {
+			newChars[i] = self->characters[i];
+		} else {
+			break;
+		}
 	}
 
 	free(self->characters);
@@ -118,7 +123,7 @@ void string_append(String *self, const char *cstr) {
 	assert(cstr);
 
 	size_t clen = strlen(cstr);
-	size_t totalLength = self->length + clen;
+	size_t totalLength = self->length + clen + 1;
 
 	if (totalLength > self->capacity) {
 		size_t newCapacity = totalLength;
@@ -128,9 +133,11 @@ void string_append(String *self, const char *cstr) {
 		string_resize(self, newCapacity);
 	}
 
-	for (size_t i = 0; i < clen; ++i) {
+	size_t i;
+	for (i = 0; i < clen; ++i) {
 		self->characters[self->length + i] = cstr[i];
 	}
+	self->characters[self->length + i] = '\0';
 
 	self->length = totalLength;
 }
@@ -251,6 +258,8 @@ String *string_substring(String *self, size_t start, size_t end) {
 	for (size_t i = start; i <= end; ++i) {
 		result->characters[i - start] = self->characters[i];
 	}
+
+	result->characters[resultLen] = '\0';
 
 	result->length = resultLen;
 
