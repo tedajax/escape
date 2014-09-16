@@ -42,5 +42,15 @@ int main(int argc, char *argv[]) {
     string_print(blah);
     string_free(blah);
 
+    String *eraseTest = S("erase me");
+    string_erase(eraseTest, 1, 3);
+    string_print(eraseTest);
+    string_free(eraseTest);
+
+    String *trimTest = S("   test   ");
+    string_trim(trimTest);
+    string_print(trimTest);
+    string_free(trimTest);
+
     return 0;
 }

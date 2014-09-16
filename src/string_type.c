@@ -184,7 +184,7 @@ void string_print(String *self) {
 	free(tmp);
 }
 
-void string_strim(String *self) {
+void string_trim(String *self) {
 	string_assert(self);
 
 	bool whitespace = true;
