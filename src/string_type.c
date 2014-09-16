@@ -269,7 +269,7 @@ String *string_substring(String *self, size_t start, size_t end) {
 Vector *string_split(String *self, char delimeter) {
 	string_assert(self);
 
-	Vector *result = vector_new(8);
+	Vector *result = vector_new(8, string_free_void);
 
 	size_t front = 0;
 	size_t back = 0;

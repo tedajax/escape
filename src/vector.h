@@ -15,7 +15,7 @@ typedef struct vector_t {
 	void **data;
 } Vector;
 
-Vector *vector_new(u32 capacity);
+Vector *vector_new(u32 capacity, free_func freeFunc);
 void vector_free(Vector *self);
 void vector_setFreeFunc(Vector *self, free_func freeFunc);
 void vector_add(Vector *self, void *element);

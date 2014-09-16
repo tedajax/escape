@@ -1,10 +1,10 @@
 #include "vector.h"
 
-Vector *vector_new(u32 capacity) {
+Vector *vector_new(u32 capacity, free_func freeFunc) {
 	Vector *self = (Vector *)malloc(sizeof(Vector));
 
 	self->size = 0;
-	self->freeFunc = NULL;
+	self->freeFunc = freeFunc;
 	self->data = NULL;
 	_vector_resize(self, capacity);
 

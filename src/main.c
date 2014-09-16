@@ -11,18 +11,20 @@ int main(int argc, char *argv[]) {
     String *sub = string_substring(subTest, 1, 3);
     string_print(sub);
     string_free(sub);
+    string_free(subTest);
 
     String *splitTest = S("abc 123 def 456");
     Vector *tokens = string_split(splitTest, ' ');
 
-    printf("Splitting %s :\n", string_cstr(splitTest));
+    char *splitcstr = string_cstr(splitTest);
+    printf("Splitting %s :\n", splitcstr);
+    free(splitcstr);
     for (u32 i = 0; i < tokens->size; ++i) {
         String *s = (String *)vector_index(tokens, i);
         string_print(s);
     }
 
     string_free(splitTest);
-    vector_setFreeFunc(tokens, string_free_void);
     vector_free(tokens);
 
     String *lowerTest = S("WHAT about LOVE!!?!?!?!?11234");
