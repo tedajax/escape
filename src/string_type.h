@@ -30,16 +30,17 @@ void string_zero(String *self);
 void string_assert(const String *self);
 
 void string_append(String *self, const char *cstr);
-void string_removeAt(String *self, size_t index);
+void string_erase_at(String *self, size_t index);
+void string_erase_from(String *self, size_t index);
 void string_erase(String *self, size_t start, size_t end);
 
 char *string_cstr(String *self);
 void string_print(String *self);
 
 void string_trim(String *self);
-int64_t string_charat(String *self, char find);
-void string_tolower(String *self);
-void string_toupper(String *self);
+int string_char_at(String *self, char find);
+void string_lower(String *self);
+void string_upper(String *self);
 String *string_substring(String *self, size_t start, size_t end);
 Vector *string_split(String *self, char delimeter);
 

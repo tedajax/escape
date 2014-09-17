@@ -27,13 +27,17 @@ int main(int argc, char *argv[]) {
     string_free(splitTest);
     vector_free(tokens);
 
+    String *charAtTest = S("12345");
+    printf("%d\n", string_char_at(charAtTest, '2'));
+    string_free(charAtTest);
+
     String *lowerTest = S("WHAT about LOVE!!?!?!?!?11234");
-    string_tolower(lowerTest);
+    string_lower(lowerTest);
     string_print(lowerTest);
     string_free(lowerTest);
 
     String *upperTest = S("nioasiq QWEVaklfq f!3322");
-    string_toupper(upperTest);
+    string_upper(upperTest);
     string_print(upperTest);
     string_free(upperTest);
 
@@ -51,6 +55,16 @@ int main(int argc, char *argv[]) {
     string_trim(trimTest);
     string_print(trimTest);
     string_free(trimTest);
+
+    String *eraseFromTest = S("123456789");
+    string_erase_from(eraseFromTest, 3);
+    string_print(eraseFromTest);
+    string_free(eraseFromTest);
+
+    String *eraseAtTest = S("12345");
+    string_erase_at(eraseAtTest, 2);
+    string_print(eraseAtTest);
+    string_free(eraseAtTest);
 
     return 0;
 }

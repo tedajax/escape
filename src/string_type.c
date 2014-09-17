@@ -142,21 +142,22 @@ void string_append(String *self, const char *cstr) {
 	self->length = totalLength;
 }
 
-void string_removeAt(String *self, size_t index) {
-	string_assert(self);
-	assert(index < self->length);
+void string_erase_at(String *self, size_t index) {
+	string_erase(self, index, index);
+}
 
-	for (size_t i = index + 1; i < self->length; ++i) {
-		self->characters[i - 1] = self->characters[i];
-	}
-
-	--self->length;
+void string_erase_from(String *self, size_t index) {
+	string_erase(self, index, self->length - 1);
 }
 
 void string_erase(String *self, size_t start, size_t end) {
 	string_assert(self);
 	assert(start < self->length);
 	assert(end < self->length);
+
+	if (end < start) {
+		return;
+	}
 
 	size_t removeLen = (end - start) + 1;
 
@@ -217,10 +218,10 @@ void string_trim(String *self) {
 	// }
 }
 
-int64_t string_charat(String *self, char find) {
+int string_char_at(String *self, char find) {
 	string_assert(self);
 
-	for (int64_t i = 0; i < self->length; ++i) {
+	for (int i = 0; i < self->length; ++i) {
 		if (self->characters[i] == find) {
 			return i;
 		}
@@ -229,7 +230,7 @@ int64_t string_charat(String *self, char find) {
 	return -1;
 }
 
-void string_tolower(String *self) {
+void string_lower(String *self) {
 	string_assert(self);
 
 	for (size_t i = 0; i < self->length; ++i) {
@@ -240,7 +241,7 @@ void string_tolower(String *self) {
 	}
 }
 
-void string_toupper(String *self) {
+void string_upper(String *self) {
 	string_assert(self);
 
 	for (size_t i = 0; i < self->length; ++i) {

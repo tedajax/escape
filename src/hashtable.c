@@ -23,7 +23,7 @@ bool hashtable_insert(HashTable *self, const char *key, void *data) {
 	Vector *bucket = NULL;
 
 	if (!self->buckets[index]) {
-		self->buckets[index] = vector_new(8);
+		self->buckets[index] = vector_new(8, NULL);
 	}
 
 	bucket = self->buckets[index];
