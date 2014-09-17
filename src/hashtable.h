@@ -9,30 +9,35 @@
 #include "types.h"
 #include "vector.h"
 
+typedef void(*hashtable_free_f)(void *);
+
 typedef struct hashtable_node_t {
 	u64 key;
 	void *value;
-} HashTableNode;
+} HashtableNode;
 
 typedef struct hashtable_t {
 	u32 bucketCount;
+    hashtable_free_f freeFunc;
 	Vector **buckets;
-} HashTable;
+} Hashtable;
 
-HashTable *hashtable_new(u32 buckets);
+Hashtable *hashtable_new(u32 buckets, hashtable_free_f freeFunc);
 
 //insert data into hashtable with given key
 //if key does not exist in hash table, inserts value with key and returns true
 //otherwise returns false and does not insert value
-bool hashtable_insert(HashTable *self, const char *key, void *data);
+bool hashtable_insert(Hashtable *self, const char *key, void *data);
 
 //returns value stored with key or NULL if it is not found
-void *hashtable_get(HashTable *self, const char *key);
+void *hashtable_get(Hashtable *self, const char *key);
 
 //removes value stored at key and returns it
-void *hashtable_remove(HashTable *self, const char *key);
+void *hashtable_remove(Hashtable *self, const char *key);
+
+void hashtable_free(Hashtable *self);
 
 u64 _hashtable_djb2(const char *key);
-u32 _hashtable_index(HashTable *self, const char *key);
+u32 _hashtable_index(Hashtable *self, const char *key);
 
 #endif

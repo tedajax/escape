@@ -1,19 +1,21 @@
 #include "hashtable.h"
 
-HashTable *hashtable_new(u32 buckets) {
-	HashTable *self = (HashTable *)malloc(sizeof(HashTable));
+Hashtable *hashtable_new(u32 buckets, hashtable_free_f freeFunc) {
+	Hashtable *self = (Hashtable *)calloc(1, sizeof(Hashtable));
 
 	self->bucketCount = buckets;
-	self->buckets = (Vector **)malloc(sizeof(Vector *) * buckets);
+	self->buckets = (Vector **)calloc(buckets, sizeof(Vector *));
 
 	for (u32 i = 0; i < self->bucketCount; ++i) {
 		self->buckets[i] = NULL;
 	}
 
+	self->freeFunc = freeFunc;
+
 	return self;
 }
 
-bool hashtable_insert(HashTable *self, const char *key, void *data) {
+bool hashtable_insert(Hashtable *self, const char *key, void *data) {
 	assert(self);
 	assert(key);
 	assert(data);
@@ -23,7 +25,7 @@ bool hashtable_insert(HashTable *self, const char *key, void *data) {
 	Vector *bucket = NULL;
 
 	if (!self->buckets[index]) {
-		self->buckets[index] = vector_new(8, NULL);
+		self->buckets[index] = vector_new(8, self->freeFunc);
 	}
 
 	bucket = self->buckets[index];
@@ -32,7 +34,7 @@ bool hashtable_insert(HashTable *self, const char *key, void *data) {
 	for (u32 i = 0; i < bucket->size; ++i) {
 		void *pkvp = vector_index(bucket, i);
 
-		HashTableNode *kvp = (HashTableNode *)pkvp;
+		HashtableNode *kvp = (HashtableNode *)pkvp;
 		if (kvp->key == hash) {
 			return false;
 		}
@@ -40,7 +42,7 @@ bool hashtable_insert(HashTable *self, const char *key, void *data) {
 
 	//since we have ruled out key collisions we can now safely add to the table
 	//wrap the data up in a key value pair and insert to the bucket
-	HashTableNode *kvp = (HashTableNode *)malloc(sizeof(HashTableNode));
+	HashtableNode *kvp = (HashtableNode *)malloc(sizeof(HashtableNode));
 	kvp->key = hash;
 	kvp->value = data;
 	vector_add(bucket, kvp);
@@ -48,7 +50,7 @@ bool hashtable_insert(HashTable *self, const char *key, void *data) {
 	return true;
 }
 
-void *hashtable_get(HashTable *self, const char *key) {
+void *hashtable_get(Hashtable *self, const char *key) {
 	assert(self);
 	assert(key);
 
@@ -62,7 +64,7 @@ void *hashtable_get(HashTable *self, const char *key) {
 
 	for (u32 i = 0; i < bucket->size; ++i) {
 		void *pkvp = vector_index(bucket, i);
-		HashTableNode *kvp = (HashTableNode *)pkvp;
+		HashtableNode *kvp = (HashtableNode *)pkvp;
 		if (kvp->key == hash) {
 			return kvp->value;
 		}
@@ -71,7 +73,7 @@ void *hashtable_get(HashTable *self, const char *key) {
 	return NULL;
 }
 
-void *hashtable_remove(HashTable *self, const char *key) {
+void *hashtable_remove(Hashtable *self, const char *key) {
 	assert(self);
 	assert(key);
 
@@ -85,7 +87,7 @@ void *hashtable_remove(HashTable *self, const char *key) {
 
 	for (u32 i = 0; i < bucket->size; ++i) {
 		void *pkvp = vector_index(bucket, i);
-		HashTableNode *kvp = (HashTableNode *)pkvp;
+		HashtableNode *kvp = (HashtableNode *)pkvp;
 		if (kvp->key == hash) {
 			void *presult = kvp->value;
 			vector_removeAt(bucket, i);
@@ -94,6 +96,27 @@ void *hashtable_remove(HashTable *self, const char *key) {
 	}
 
 	return NULL;
+}
+
+void hashtable_free(Hashtable *self) {
+	assert(self);
+
+	for (u32 i = 0; i < self->bucketCount; ++i) {
+		Vector *bucket = self->buckets[i];
+		if (bucket) {
+			for (u32 j = 0; j < bucket->size; ++j) {
+				HashtableNode *kvp = (HashtableNode *)vector_index(bucket, j);
+				if (self->freeFunc) {
+					self->freeFunc(kvp->value);
+				}
+				free(kvp);
+			}
+
+			vector_free(bucket);
+		}
+	}
+
+	free(self);
 }
 
 u64 _hashtable_djb2(const char *key) {
@@ -105,6 +128,6 @@ u64 _hashtable_djb2(const char *key) {
 	return hash;
 }
 
-u32 _hashtable_index(HashTable *self, const char *key) {
+u32 _hashtable_index(Hashtable *self, const char *key) {
 	return _hashtable_djb2(key) % self->bucketCount;
 }
