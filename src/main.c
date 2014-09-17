@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
         memset(input, 0, MAX_INPUT_LENGTH);
 
         printf("> ");
-        //scanf("%63s", input);
         fgets(input, MAX_INPUT_LENGTH, stdin);
 
         //strip new line character
@@ -34,6 +33,15 @@ int main(int argc, char *argv[]) {
         }
 
         Vector *words = parse_words(inputStr);
+
+        for (u32 i = 0; i < words->size; ++i) {
+            String *s = (String *)vector_index(words, i);
+            char *scstr = string_cstr(s);
+            printf("%s ", scstr);
+            free(scstr);
+        }
+        printf("\n");
+
         Verb verb = parse_verb(words);
 
         vector_free(words);

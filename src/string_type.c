@@ -299,6 +299,45 @@ Vector *string_split(String *self, char delimeter) {
 	return result;
 }
 
+Vector *string_splitws(String *self) {
+	string_assert(self);
+
+	Vector *result = vector_new(8, string_free_void);
+
+	size_t front = 0;
+	size_t back = 0;
+
+	while (front < self->length) {
+		bool foundDelim = false;
+		while (!foundDelim && back < self->length) {
+			char backChar = self->characters[back];
+			if (_char_is_whitespace(backChar)) {
+				foundDelim = true;
+			} else {
+				++back;
+			}
+		}
+
+		String *sub = string_substring(self, front, back - 1);
+		vector_add(result, (void *)sub);
+
+		++back;
+		while (foundDelim && back < self->length) {
+			char backChar = self->characters[back];
+			if (_char_is_whitespace(backChar)) {
+				++back;
+			} else {
+				foundDelim = false;
+			}
+		}
+
+		front = back + 1;
+		back = front;
+	}
+
+	return result;
+}
+
 bool _char_is_whitespace(char c) {
 	return c == ' ' || c == '\t' || c == '\n' || c == '\b' || c == '\r';
 }

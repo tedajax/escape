@@ -24,7 +24,7 @@ bool parse_input_valid(String *input) {
 
 Vector *parse_words(String *input) {
     //TODO: split by whitespace instead of just single spaces
-    Vector *words = string_split(input, ' ');
+    Vector *words = string_splitws(input);
     return words;
 }
 

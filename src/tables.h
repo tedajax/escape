@@ -8,6 +8,8 @@
 extern Verb *G_VERB_LIST;
 extern Hashtable *G_WORD_TABLE_VERBS;
 
+extern VerbPattern G_VERB_PATTERNS[VERB_LAST];
+
 #define ADD_VERB(text, verb)hashtable_insert(G_WORD_TABLE_VERBS, \
     text, \
     (void *)&G_VERB_LIST[verb])

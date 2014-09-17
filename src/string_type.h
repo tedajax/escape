@@ -43,6 +43,7 @@ void string_lower(String *self);
 void string_upper(String *self);
 String *string_substring(String *self, size_t start, size_t end);
 Vector *string_split(String *self, char delimeter);
+Vector *string_splitws(String *self);
 
 bool _char_is_whitespace(char c);
 
