@@ -321,7 +321,6 @@ Vector *string_splitws(String *self) {
 		String *sub = string_substring(self, front, back - 1);
 		vector_add(result, (void *)sub);
 
-		++back;
 		while (foundDelim && back < self->length) {
 			char backChar = self->characters[back];
 			if (_char_is_whitespace(backChar)) {
@@ -331,7 +330,7 @@ Vector *string_splitws(String *self) {
 			}
 		}
 
-		front = back + 1;
+		front = back;
 		back = front;
 	}
 
