@@ -1,0 +1,29 @@
+{
+    "rooms": [
+        {
+            "id": 1,
+            "name": "room_1",
+            "look_desc": "A room with exits east and west.",
+            "connections": {
+                "east": 2,
+                "west": 3
+            }
+        },
+        {
+            "id": 2,
+            "name": "room_2",
+            "look_desc": "A room with an exit west.",
+            "connections": {
+                "west": 1
+            }
+        },
+        {
+            "id": 3,
+            "name": "room_3",
+            "look_desc": "A room with an exit east.",
+            "connections": {
+                "east": 1
+            }
+        }
+    ]
+}
