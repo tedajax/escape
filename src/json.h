@@ -9,14 +9,14 @@
 #include "vector.h"
 #include "hashtable.h"
 
-#define JSMN_STRING
+#define JSMN_STRICT
 #define JSMN_PARENT_LINKS
 
 #include "jsmn.h"
 
 #define MAX_JSON_TOKENS 256
 
-char *json_load_file(const char *filename);
+void json_load_file(const char *filename, char *buffer);
 jsmntok_t *json_tokenize(char *js);
 
 #endif
