@@ -32,5 +32,24 @@ void json_load_file(const char *filename, char *buffer) {
 }
 
 jsmntok_t *json_tokenize(char *js) {
+    jsmn_parser parser;
+    jsmn_init(&parser);
+
+    unsigned int n = MAX_JSON_TOKENS;
+    jsmntok_t *tokens = calloc(n, sizeof(jsmntok_t));
+    ASSERT(tokens, "allocation failure");
+
+    int ret = jsmn_parse(&parser, js, tokens, n);
+
+    while (ret == JSMN_ERROR_NOMEM) {
+        n = n * 2 + 1;
+        tokens = realloc(tokens, sizeof(jsmntok_t) * n);
+        ASSERT(tokens, "reallocation failure");
+        ret = jsmn_parse(&parser, js, strlen(js), tokens, n);
+    }
+
+    ASSERT(ret != JSMN_ERROR_INVAL, "jsmn_parse: invalid JSON string.");
+    ASSERT(ret != JSMN_ERROR_PART, "jsmn_parse: truncated JSON string.");
     
+    return tokens;
 }

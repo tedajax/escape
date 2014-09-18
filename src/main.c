@@ -6,10 +6,15 @@
 #include "containers.h"
 #include "tables.h"
 #include "parser.h"
+#include "json.h"
 
 const size_t MAX_INPUT_LENGTH = 64;
 
 int main(int argc, char *argv[]) {
+    char *data;
+    json_load_file("data/test.json", data);
+    jsmntok_t *tokens = json_tokenize(data);
+
     char *input = calloc(MAX_INPUT_LENGTH, sizeof(char));
     bool run = init_tables();
 
