@@ -13,6 +13,7 @@ bool parse_input_valid(String *input) {
         bool valid = c == ' ';
              valid |= (c >= 'a' && c <= 'z');
              valid |= (c >= '0' && c <= '9');
+             valid |= c == '\t';
         
         if (!valid) {
             return false;
