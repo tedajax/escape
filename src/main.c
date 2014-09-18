@@ -11,8 +11,8 @@
 const size_t MAX_INPUT_LENGTH = 64;
 
 int main(int argc, char *argv[]) {
-    char *data;
-    json_load_file("data/test.json", data);
+    char *data = NULL;
+    data = json_load_file("data/test.json", data);
     jsmntok_t *tokens = json_tokenize(data);
 
     char *input = calloc(MAX_INPUT_LENGTH, sizeof(char));
@@ -41,9 +41,7 @@ int main(int argc, char *argv[]) {
 
         for (u32 i = 0; i < words->size; ++i) {
             String *s = (String *)vector_index(words, i);
-            char *scstr = string_cstr(s);
-            printf("%s ", scstr);
-            free(scstr);
+            printf("%s ", s->characters);
         }
         printf("\n");
 

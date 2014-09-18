@@ -16,7 +16,7 @@
 
 #define MAX_JSON_TOKENS 256
 
-void json_load_file(const char *filename, char *buffer);
+char *json_load_file(const char *filename, char *buffer);
 jsmntok_t *json_tokenize(char *js);
 
 #endif

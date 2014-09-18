@@ -173,21 +173,10 @@ void string_erase(String *self, size_t start, size_t end) {
 	self->length -= (removeLen - 1);
 }
 
-char *string_cstr(String *self) {
-	string_assert(self);
-	
-	size_t slen = self->length + 1;
-	char *dest = calloc(slen, sizeof(char));
-	snprintf(dest, slen, "%s", self->characters);
-	return dest;
-}
-
 void string_print(String *self) {
 	string_assert(self);
 
-	char *tmp = string_cstr(self);
-	printf("%s\n", tmp);
-	free(tmp);
+	printf("%s\n", self->characters);
 }
 
 void string_trim(String *self) {

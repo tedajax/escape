@@ -34,11 +34,8 @@ Verb parse_verb(Vector *words) {
     assert(words->size > 0);
 
     String *verbWord = (String *)vector_index(words, 0);
-    char *verbWordCstr = string_cstr(verbWord);
-    Verb *ptrVerb = (Verb *)hashtable_get(G_WORD_TABLE_VERBS, verbWordCstr);
+    Verb *ptrVerb = (Verb *)hashtable_get(G_WORD_TABLE_VERBS, verbWord->characters);
     
-    free(verbWordCstr);
-
     Verb result = VERB_INVALID;
     if (ptrVerb) {
         result = *ptrVerb;

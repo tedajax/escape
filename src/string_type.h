@@ -34,7 +34,6 @@ void string_erase_at(String *self, size_t index);
 void string_erase_from(String *self, size_t index);
 void string_erase(String *self, size_t start, size_t end);
 
-char *string_cstr(String *self);
 void string_print(String *self);
 
 void string_trim(String *self);

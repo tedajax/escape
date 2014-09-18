@@ -1,6 +1,6 @@
 #include "json.h"
 
-void json_load_file(const char *filename, char *buffer) {
+char *json_load_file(const char *filename, char *buffer) {
     FILE *fp;
     long fileSize;
 
@@ -16,7 +16,7 @@ void json_load_file(const char *filename, char *buffer) {
         free(buffer);
     }
 
-    buffer = calloc(fileSize, sizeof(char));
+    buffer = (char *)calloc(fileSize+1, sizeof(char));
     if (!buffer) {
         fclose(fp);
         ASSERT(false, "memory allocation failure");
@@ -29,9 +29,13 @@ void json_load_file(const char *filename, char *buffer) {
     }
 
     fclose(fp);
+
+    return buffer;
 }
 
 jsmntok_t *json_tokenize(char *js) {
+    ASSERT(js, "NULL json data passed to json_tokenize.");
+
     jsmn_parser parser;
     jsmn_init(&parser);
 
@@ -39,7 +43,7 @@ jsmntok_t *json_tokenize(char *js) {
     jsmntok_t *tokens = calloc(n, sizeof(jsmntok_t));
     ASSERT(tokens, "allocation failure");
 
-    int ret = jsmn_parse(&parser, js, tokens, n);
+    int ret = jsmn_parse(&parser, js, strlen(js), tokens, n);
 
     while (ret == JSMN_ERROR_NOMEM) {
         n = n * 2 + 1;
