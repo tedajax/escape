@@ -1,5 +1,7 @@
 #include "json.h"
 
+#define JSMN_PARENT_LINKS
+
 char *json_load_file(const char *filename, char *buffer) {
     FILE *fp;
     long fileSize;
@@ -40,6 +42,7 @@ jsmntok_t *json_tokenize(char *js) {
     jsmn_init(&parser);
 
     unsigned int n = MAX_JSON_TOKENS;
+    size_t toksize = sizeof(jsmntok_t);
     jsmntok_t *tokens = calloc(n, sizeof(jsmntok_t));
     ASSERT(tokens, "allocation failure");
 
@@ -60,4 +63,14 @@ jsmntok_t *json_tokenize(char *js) {
 
 Hashtable *json_build_from_tokens(jsmntok_t *tokens) {
     return NULL;   
+}
+
+const char *json_type_name(jsmntype_t type) {
+    switch (type) {
+        case JSMN_PRIMITIVE: return "JSMN_PRIMITIVE";
+        case JSMN_OBJECT: return "JSMN_OBJECT";
+        case JSMN_ARRAY: return "JSMN_ARRAY";
+        case JSMN_STRING: return "JSMN_STRING";
+        default: return "UNKNOWN";
+    }
 }

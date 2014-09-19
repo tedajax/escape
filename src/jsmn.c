@@ -185,26 +185,26 @@ jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 				if (tokens == NULL)
 					break;
 				type = (c == '}' ? JSMN_OBJECT : JSMN_ARRAY);
-#ifdef JSMN_PARENT_LINKS
-				if (parser->toknext < 1) {
-					return JSMN_ERROR_INVAL;
-				}
-				token = &tokens[parser->toknext - 1];
-				for (;;) {
-					if (token->start != -1 && token->end == -1) {
-						if (token->type != type) {
-							return JSMN_ERROR_INVAL;
-						}
-						token->end = parser->pos + 1;
-						parser->toksuper = token->parent;
-						break;
-					}
-					if (token->parent == -1) {
-						break;
-					}
-					token = &tokens[token->parent];
-				}
-#else
+// #ifdef JSMN_PARENT_LINKS
+// 				if (parser->toknext < 1) {
+// 					return JSMN_ERROR_INVAL;
+// 				}
+// 				token = &tokens[parser->toknext - 1];
+// 				for (;;) {
+// 					if (token->start != -1 && token->end == -1) {
+// 						if (token->type != type) {
+// 							return JSMN_ERROR_INVAL;
+// 						}
+// 						token->end = parser->pos + 1;
+// 						parser->toksuper = token->parent;
+// 						break;
+// 					}
+// 					if (token->parent == -1) {
+// 						break;
+// 					}
+// 					token = &tokens[token->parent];
+// 				}
+// #else
 				for (i = parser->toknext - 1; i >= 0; i--) {
 					token = &tokens[i];
 					if (token->start != -1 && token->end == -1) {
@@ -225,7 +225,7 @@ jsmnerr_t jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 						break;
 					}
 				}
-#endif
+// #endif
 				break;
 			case '\"':
 				r = jsmn_parse_string(parser, js, len, tokens, num_tokens);

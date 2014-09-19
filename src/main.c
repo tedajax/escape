@@ -15,6 +15,32 @@ int main(int argc, char *argv[]) {
     data = json_load_file("data/test.json", data);
     jsmntok_t *tokens = json_tokenize(data);
 
+    bool end = false;
+    size_t count = 0;
+    while (!end) {
+        jsmntok_t token = tokens[count++];
+
+        if (token.start == 0 && token.end == 0) {
+            end = true;
+            continue;
+        }
+
+#ifndef JSMN_PARENT_LINKS
+        printf("{ type: %s, start: %d, end %d, size: %d }\n",
+            json_type_name(token.type),
+            token.start,
+            token.end,
+            token.size);
+#else
+        printf("{ type: %s, start: %d, end %d, size: %d, parent: %d }\n",
+            json_type_name(token.type),
+            token.start,
+            token.end,
+            token.size,
+            token.parent);
+#endif
+    }
+
     char *input = calloc(MAX_INPUT_LENGTH, sizeof(char));
     bool run = init_tables();
 
