@@ -57,3 +57,7 @@ jsmntok_t *json_tokenize(char *js) {
     
     return tokens;
 }
+
+Hashtable *json_build_from_tokens(jsmntok_t *tokens) {
+    return NULL;   
+}
