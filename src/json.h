@@ -9,16 +9,44 @@
 #include "vector.h"
 #include "hashtable.h"
 
-// #define JSMN_STRICT
-// #define JSMN_PARENT_LINKS
-
 #include "jsmn.h"
 
-#define MAX_JSON_TOKENS 256
+#define DEFAULT_TOKEN_ALLOCATION 256
 
-char *json_load_file(const char *filename, char *buffer);
-jsmntok_t *json_tokenize(char *js);
+extern const u32 JSON_DEFAULT_HASHTABLE_BUCKETS;
+extern const u32 JSON_DEFAULT_VECTOR_SIZE;
+extern const u32 JSON_DEFAULT_STRING_LENGTH;
 
-const char *json_type_name(jsmntype_t type);
+typedef enum json_token_type_e {
+    JS_TOKEN_NULL,
+    JS_TOKEN_OBJECT,
+    JS_TOKEN_ARRAY,
+    JS_TOKEN_STRING,
+    JS_TOKEN_NUMBER,
+    JS_TOKEN_BOOLEAN
+} JsonTokenType;
+
+typedef struct json_token_t {
+    JsonTokenType type;
+    int id;
+    int children;
+    int parent;
+    void *data;
+} JsonToken;
+
+const char *json_token_type_string(JsonTokenType type);
+
+char *json_load_file(const char *filename);
+jsmntok_t *json_tokenize(const char *js);
+
+JsonToken *json_token_new(JsonTokenType type);
+JsonToken *json_token_create(jsmntok_t token, int id, const char *js);
+void json_token_free(JsonToken *self);
+void json_token_free_void(void *self);
+void json_token_print(JsonToken *self);
+
+// tokens must be NULL terminated
+JsonToken *json_build_from_tokens(jsmntok_t *tokens, const char *js);
+JsonToken *json_build_tokens_length(jsmntok_t *tokens, size_t num, const char *js);
 
 #endif

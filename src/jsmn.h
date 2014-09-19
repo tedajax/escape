@@ -1,6 +1,9 @@
 #ifndef __JSMN_H_
 #define __JSMN_H_
 
+#define JSMN_PARENT_LINKS
+#define JSMN_STRICT
+
 /**
  * JSON type identifier. Basic types are:
  *  o Object
