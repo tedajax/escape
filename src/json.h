@@ -15,7 +15,6 @@
 
 extern const u32 JSON_DEFAULT_HASHTABLE_BUCKETS;
 extern const u32 JSON_DEFAULT_VECTOR_SIZE;
-extern const u32 JSON_DEFAULT_STRING_LENGTH;
 
 typedef enum json_token_type_e {
     JS_TOKEN_NULL,
@@ -40,7 +39,8 @@ char *json_load_file(const char *filename);
 jsmntok_t *json_tokenize(const char *js);
 
 JsonToken *json_token_new(JsonTokenType type);
-JsonToken *json_token_create(jsmntok_t token, int id, const char *js);
+JsonToken *json_token_set_type(JsonToken *self, JsonTokenType type);
+JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const char *js);
 void json_token_free(JsonToken *self);
 void json_token_free_void(void *self);
 void json_token_print(JsonToken *self);

@@ -2,7 +2,6 @@
 
 const u32 JSON_DEFAULT_HASHTABLE_BUCKETS = 8;
 const u32 JSON_DEFAULT_VECTOR_SIZE = 8;
-const u32 JSON_DEFAULT_STRING_LENGTH = 12;
 
 const char *json_token_type_string(JsonTokenType type) {
     switch (type) {
@@ -73,10 +72,23 @@ jsmntok_t *json_tokenize(const char *js) {
 JsonToken *json_token_new(JsonTokenType type) {
     JsonToken *self = calloc(1, sizeof(JsonToken));
 
-    self->type = type;
     self->id = -1;
     self->children = -1;
     self->parent = -1;
+    self->data = NULL;
+    
+    json_token_set_type(self, type);
+
+    return self;
+}
+
+JsonToken *json_token_set_type(JsonToken *self, JsonTokenType type) {
+    assert(self);
+
+    //TODO: freeing shit up
+    assert(self->data == NULL);
+
+    self->type = type;
 
     switch (self->type) {
         default:
@@ -95,27 +107,27 @@ JsonToken *json_token_new(JsonTokenType type) {
             break;
 
         case JS_TOKEN_STRING:
-            self->data = (void *)string_reserve(JSON_DEFAULT_STRING_LENGTH);
+            self->data = NULL;
             break;
 
         case JS_TOKEN_NUMBER:
             self->data = calloc(1, sizeof(f64));
+            (*(f64 *)self->data) = 0.0;
             break;
 
         case JS_TOKEN_BOOLEAN:
             self->data = calloc(1, sizeof(bool));
+            (*(bool *)self->data) = false;
             break;
     }
 
     return self;
 }
 
-JsonToken *json_token_create(jsmntok_t token, int id, const char *js) {
-    JsonToken *new = NULL;
-
+JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const char *js) {
     JsonTokenType type = JS_TOKEN_NULL;
 
-    char c = '\0';
+    char c = 0;
 
     switch (token.type) {
         case JSMN_OBJECT:
@@ -143,12 +155,42 @@ JsonToken *json_token_create(jsmntok_t token, int id, const char *js) {
         default: break;
     }
 
-    new = json_token_new(type);
-    new->id = id;
-    new->parent = token.parent;
-    new->children = token.size;
+    if (!self) {
+        self = json_token_new(type);
+    } else {
+        json_token_set_type(self, type);
+    }
 
-    return new;
+    size_t dataLen = token.end - token.start;
+    char *dataStr = calloc(dataLen, sizeof(char));
+    char *dataEnd;
+
+    memcpy(dataStr, &js[token.start], dataLen);
+
+    switch (self->type) {
+        case JS_TOKEN_BOOLEAN:
+            if (js[token.start] == 't') {
+                (*(bool *)self->data) = true;
+            }
+            break;
+
+        case JS_TOKEN_NUMBER:
+            (*(f64 *)self->data) = strtod(dataStr, &dataEnd);
+            break;
+
+        case JS_TOKEN_STRING:
+            self->data = string_reserve(dataLen + 1);
+            memcpy(((String *)self->data)->characters, dataStr, dataLen);
+            break;
+
+        default: break;
+    }
+
+    self->id = id;
+    self->parent = token.parent;
+    self->children = token.size;
+
+    return self;
 }
 
 void json_token_free(JsonToken *self) {
@@ -160,11 +202,23 @@ void json_token_free_void(void *self) {
 }
 
 void json_token_print(JsonToken *self) {
-    printf("{ type: %s, id: %d, children: %d, parent: %d }\n",
+    printf("{ type: %s, id: %d, children: %d, parent: %d, value: ",
         json_token_type_string(self->type),
         self->id,
         self->children,
         self->parent);
+
+    switch (self->type) {
+        case JS_TOKEN_NULL: printf("null"); break;
+        case JS_TOKEN_STRING: printf("%s", ((String *)self->data)->characters); break;
+        case JS_TOKEN_NUMBER: printf("%f", (f64 *)self->data); break;
+        case JS_TOKEN_BOOLEAN: printf("%s", (*(bool *)self->data) ? "true" : "false"); break;
+        case JS_TOKEN_ARRAY:
+        case JS_TOKEN_OBJECT: printf("todo"); break;
+        default: printf("impossibru"); break;
+    }
+
+    printf(" }\n");
 }
 
 JsonToken *json_build_from_tokens(jsmntok_t *tokens, const char *js) {
@@ -180,13 +234,14 @@ JsonToken *json_build_from_tokens(jsmntok_t *tokens, const char *js) {
 }
 
 JsonToken *json_build_tokens_length(jsmntok_t *tokens, size_t num, const char *js) {
+    JsonToken *jsonTokens = calloc(num, sizeof(JsonToken));
+
     int currentId = 0;
     for (u32 i = 0; i < num; ++i) {
-        JsonToken *token = json_token_create(tokens[i], currentId, js);
+        JsonToken *token = json_token_create(&jsonTokens[i], tokens[i], currentId, js);
         ++currentId;
-        json_token_print(token);
-        free(token);
+        //json_token_print(token);
     }
 
-    return NULL;
+    return jsonTokens;
 }
