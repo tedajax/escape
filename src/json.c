@@ -11,6 +11,7 @@ const char *json_token_type_string(JsonTokenType type) {
         case JS_TOKEN_ARRAY: return "array";
         case JS_TOKEN_STRING: return "string";
         case JS_TOKEN_NUMBER: return "number";
+        case JS_TOKEN_INTEGER: return "integer";
         case JS_TOKEN_BOOLEAN: return "boolean";
     }
 }
@@ -115,6 +116,11 @@ JsonToken *json_token_set_type(JsonToken *self, JsonTokenType type) {
             (*(f64 *)self->data) = 0.0;
             break;
 
+        case JS_TOKEN_INTEGER:
+            self->data = calloc(1, sizeof(i64));
+            (*(i64 *)self->data) = 0;
+            break;
+
         case JS_TOKEN_BOOLEAN:
             self->data = calloc(1, sizeof(bool));
             (*(bool *)self->data) = false;
@@ -146,7 +152,13 @@ JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const cha
             c = js[token.start];
 
             if (c == '-' || (c >= '0' && c <= '9')) {
-                type = JS_TOKEN_NUMBER;
+                type = JS_TOKEN_INTEGER;
+                for (size_t i = token.start; i < token.end; ++i) {
+                    if (js[i] == '.') {
+                        type = JS_TOKEN_NUMBER;
+                        break;
+                    }
+                }
             } else if (c == 't' || c == 'f') {
                 type = JS_TOKEN_BOOLEAN;
             }
@@ -176,6 +188,10 @@ JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const cha
 
         case JS_TOKEN_NUMBER:
             (*(f64 *)self->data) = strtod(dataStr, &dataEnd);
+            break;
+
+        case JS_TOKEN_INTEGER:
+            (*(i64 *)self->data) = atoi(dataStr);
             break;
 
         case JS_TOKEN_STRING:
@@ -221,6 +237,109 @@ void json_token_print(JsonToken *self) {
     printf(" }\n");
 }
 
+JsonToken *json_obj_get(JsonToken *object, const char *key) {
+    assert(object);
+    ASSERT(object->type == JS_TOKEN_OBJECT, "JSON token must be of object type.");
+
+    Hashtable *hashtable = (Hashtable *)object->data;
+
+    return hashtable_get(hashtable, key);
+}
+
+int json_obj_get_int(JsonToken *object, const char *key) {
+    JsonToken *value = json_obj_get(object, key);
+    ASSERT(value->type == JS_TOKEN_INTEGER, "Value is not of integer type.");
+
+    return *((i64 *)value->data);
+}
+
+f64 json_obj_get_f64(JsonToken *object, const char *key) {
+    JsonToken *value = json_obj_get(object, key);
+    ASSERT(value->type == JS_TOKEN_NUMBER, "Value is not of number type.");
+
+    return *((f64 *)value->data);
+}
+
+bool json_obj_get_bool(JsonToken *object, const char *key) {
+    JsonToken *value = json_obj_get(object, key);
+    ASSERT(value->type == JS_TOKEN_BOOLEAN, "Value is not of boolean type.");
+
+    return *((bool *)value->data);
+}
+
+String *json_obj_get_string(JsonToken *object, const char *key) {
+    JsonToken *value = json_obj_get(object, key);
+    ASSERT(value->type == JS_TOKEN_STRING, "Value is not of string type.");
+
+    return (String *)value->data;
+}
+
+JsonToken *json_obj_get_array(JsonToken *object, const char *key) {
+    JsonToken *value = json_obj_get(object, key);
+    ASSERT(value->type == JS_TOKEN_ARRAY, "Value is not of array type.");
+
+    return value;
+}
+
+JsonToken *json_obj_get_object(JsonToken *object, const char *key) {
+    JsonToken *value = json_obj_get(object, key);
+    ASSERT(value->type == JS_TOKEN_OBJECT, "Value is not of object type.");
+
+    return value;
+}
+
+JsonToken *json_arr_get(JsonToken *array, u32 index) {
+    assert(array);
+    ASSERT(array->type == JS_TOKEN_ARRAY, "JSON token must be of array type.");
+
+    Vector *vector = (Vector *)array;
+    ASSERT(index < vector->size, "Index out of bounds.");
+
+    return vector_index(vector, index);
+}
+
+int json_arr_get_int(JsonToken *array, u32 index) {
+    JsonToken *value = json_arr_get(array, index);
+    ASSERT(value->type == JS_TOKEN_INTEGER, "Value is not of integer type.");
+
+    return *((i64 *)value->data);
+}
+
+f64 json_arr_get_f64(JsonToken *array, u32 index) {
+    JsonToken *value = json_arr_get(array, index);
+    ASSERT(value->type == JS_TOKEN_NUMBER, "Value is not of number type.");
+
+    return *((f64 *)value->data);
+}
+
+bool json_arr_get_bool(JsonToken *array, u32 index) {
+    JsonToken *value = json_arr_get(array, index);
+    ASSERT(value->type == JS_TOKEN_BOOLEAN, "Value is not of boolean type.");
+
+    return *((bool *)value->data);
+}
+
+String *json_arr_get_string(JsonToken *array, u32 index) {
+    JsonToken *value = json_arr_get(array, index);
+    ASSERT(value->type == JS_TOKEN_STRING, "Value is not of string type.");
+
+    return (String *)value->data;
+}
+
+JsonToken *json_arr_get_array(JsonToken *array, u32 index) {
+    JsonToken *value = json_arr_get(array, index);
+    ASSERT(value->type == JS_TOKEN_ARRAY, "Value is not of array type.");
+
+    return value;
+}
+
+JsonToken *json_arr_get_object(JsonToken *array, u32 index) {
+    JsonToken *value = json_arr_get(array, index);
+    ASSERT(value->type == JS_TOKEN_OBJECT, "Value is not of object type.");
+
+    return value;
+}
+
 JsonToken *json_build_from_tokens(jsmntok_t *tokens, const char *js) {
     size_t count = 0;
     while (true) {
@@ -240,7 +359,36 @@ JsonToken *json_build_tokens_length(jsmntok_t *tokens, size_t num, const char *j
     for (u32 i = 0; i < num; ++i) {
         JsonToken *token = json_token_create(&jsonTokens[i], tokens[i], currentId, js);
         ++currentId;
-        //json_token_print(token);
+        json_token_print(token);
+    }
+
+    for (u32 i = 0; i < num - 1; ++i) {
+        JsonToken *token = &jsonTokens[i];
+        if (token->type == JS_TOKEN_OBJECT) {
+            bool isKey = true;
+            String *key = NULL;
+            for (u32 j = i + 1; j < num; ++j) {
+                JsonToken *next = &jsonTokens[j];
+                if (next->parent == token->id) {
+                    if (isKey) {
+                        key = (String *)next->data;
+                        isKey = false;
+                    } else {
+                        Hashtable *table = (Hashtable *)token->data;
+                        hashtable_insert(table, key->characters, next);
+                        isKey = true;
+                    }
+                }
+            }
+        } else if (token->type == JS_TOKEN_ARRAY) {
+            for (u32 j = i + 1; j < num; ++j) {
+                JsonToken *next = &jsonTokens[j];
+                if (next->parent == token->id) {
+                    Vector *array = (Vector *)token->data;
+                    vector_add(array, next);
+                }
+            }
+        }
     }
 
     return jsonTokens;

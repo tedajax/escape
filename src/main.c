@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/time.h>
 
 #include "types.h"
 #include "containers.h"
@@ -12,17 +11,15 @@
 const size_t MAX_INPUT_LENGTH = 64;
 
 int main(int argc, char *argv[]) {
-    struct timeval start, end;
-    gettimeofday(&start, NULL);
-
-    char *data = json_load_file("data/test4.json");
+    char *data = json_load_file("data/test.json");
     jsmntok_t *tokens = json_tokenize(data);
 
-    json_build_from_tokens(tokens, data);
-
-    gettimeofday(&end, NULL);
-
-    printf("%d microseconds\n", end.tv_usec - start.tv_usec);
+    JsonToken *root = json_build_from_tokens(tokens, data);
+    JsonToken *roomToken = json_obj_get_array(root, "rooms");
+    Vector *rooms = JSON_VECTOR(roomToken);
+    JsonToken *room1 = (JsonToken *)vector_index(rooms, 0);
+    int room1Id = json_obj_get_int(room1, "id");
+    printf("room id %d\n", room1Id);
 
     free(data);
     free(tokens);

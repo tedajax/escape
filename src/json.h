@@ -21,6 +21,7 @@ typedef enum json_token_type_e {
     JS_TOKEN_OBJECT,
     JS_TOKEN_ARRAY,
     JS_TOKEN_STRING,
+    JS_TOKEN_INTEGER,
     JS_TOKEN_NUMBER,
     JS_TOKEN_BOOLEAN
 } JsonTokenType;
@@ -33,6 +34,9 @@ typedef struct json_token_t {
     void *data;
 } JsonToken;
 
+#define JSON_VECTOR(token) ((Vector *)(token)->data)
+#define JSON_HASHTABLE(token) ((Hashtable *)(token)->data)
+
 const char *json_token_type_string(JsonTokenType type);
 
 char *json_load_file(const char *filename);
@@ -44,6 +48,22 @@ JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const cha
 void json_token_free(JsonToken *self);
 void json_token_free_void(void *self);
 void json_token_print(JsonToken *self);
+
+JsonToken *json_obj_get(JsonToken *object, const char *key);
+int json_obj_get_int(JsonToken *object, const char *key);
+f64 json_obj_get_f64(JsonToken *object, const char *key);
+bool json_obj_get_bool(JsonToken *object, const char *key);
+String *json_obj_get_string(JsonToken *object, const char *key);
+JsonToken *json_obj_get_array(JsonToken *object, const char *key);
+JsonToken *json_obj_get_object(JsonToken *object, const char *key);
+
+JsonToken *json_arr_get(JsonToken *array, u32 index);
+int json_arr_get_int(JsonToken *array, u32 index);
+f64 json_arr_get_f64(JsonToken *array, u32 index);
+bool json_arr_get_bool(JsonToken *array, u32 index);
+String *json_arr_get_string(JsonToken *array, u32 index);
+JsonToken *json_arr_get_array(JsonToken *array, u32 index);
+JsonToken *json_arr_get_object(JsonToken *array, u32 index);
 
 // tokens must be NULL terminated
 JsonToken *json_build_from_tokens(jsmntok_t *tokens, const char *js);
