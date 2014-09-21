@@ -248,6 +248,11 @@ JsonToken *json_obj_get(JsonToken *object, const char *key) {
 
 int json_obj_get_int(JsonToken *object, const char *key) {
     JsonToken *value = json_obj_get(object, key);
+
+    if (value == NULL) {
+        return 0;
+    }
+
     ASSERT(value->type == JS_TOKEN_INTEGER, "Value is not of integer type.");
 
     return *((i64 *)value->data);
@@ -255,6 +260,11 @@ int json_obj_get_int(JsonToken *object, const char *key) {
 
 f64 json_obj_get_f64(JsonToken *object, const char *key) {
     JsonToken *value = json_obj_get(object, key);
+    
+    if (value == NULL) {
+        return 0.0;
+    }
+
     ASSERT(value->type == JS_TOKEN_NUMBER, "Value is not of number type.");
 
     return *((f64 *)value->data);
@@ -262,6 +272,11 @@ f64 json_obj_get_f64(JsonToken *object, const char *key) {
 
 bool json_obj_get_bool(JsonToken *object, const char *key) {
     JsonToken *value = json_obj_get(object, key);
+    
+    if (value == NULL) {
+        return false;
+    }
+
     ASSERT(value->type == JS_TOKEN_BOOLEAN, "Value is not of boolean type.");
 
     return *((bool *)value->data);
@@ -269,6 +284,11 @@ bool json_obj_get_bool(JsonToken *object, const char *key) {
 
 String *json_obj_get_string(JsonToken *object, const char *key) {
     JsonToken *value = json_obj_get(object, key);
+    
+    if (value == NULL) {
+        return NULL;
+    }
+
     ASSERT(value->type == JS_TOKEN_STRING, "Value is not of string type.");
 
     return (String *)value->data;
@@ -276,6 +296,11 @@ String *json_obj_get_string(JsonToken *object, const char *key) {
 
 JsonToken *json_obj_get_array(JsonToken *object, const char *key) {
     JsonToken *value = json_obj_get(object, key);
+
+    if (value == NULL) {
+        return NULL;
+    }
+
     ASSERT(value->type == JS_TOKEN_ARRAY, "Value is not of array type.");
 
     return value;
@@ -283,6 +308,11 @@ JsonToken *json_obj_get_array(JsonToken *object, const char *key) {
 
 JsonToken *json_obj_get_object(JsonToken *object, const char *key) {
     JsonToken *value = json_obj_get(object, key);
+
+    if (value == NULL) {
+        return NULL;
+    }
+
     ASSERT(value->type == JS_TOKEN_OBJECT, "Value is not of object type.");
 
     return value;
@@ -357,9 +387,7 @@ JsonToken *json_build_tokens_length(jsmntok_t *tokens, size_t num, const char *j
 
     int currentId = 0;
     for (u32 i = 0; i < num; ++i) {
-        JsonToken *token = json_token_create(&jsonTokens[i], tokens[i], currentId, js);
-        ++currentId;
-        json_token_print(token);
+        json_token_create(&jsonTokens[i], tokens[i], currentId++, js);
     }
 
     for (u32 i = 0; i < num - 1; ++i) {

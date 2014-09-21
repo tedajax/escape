@@ -7,6 +7,7 @@
 #include "tables.h"
 #include "parser.h"
 #include "json.h"
+#include "room.h"
 
 const size_t MAX_INPUT_LENGTH = 64;
 
@@ -16,10 +17,13 @@ int main(int argc, char *argv[]) {
 
     JsonToken *root = json_build_from_tokens(tokens, data);
     JsonToken *roomToken = json_obj_get_array(root, "rooms");
-    Vector *rooms = JSON_VECTOR(roomToken);
-    JsonToken *room1 = (JsonToken *)vector_index(rooms, 0);
-    int room1Id = json_obj_get_int(room1, "id");
-    printf("room id %d\n", room1Id);
+    Vector *roomData = JSON_VECTOR(roomToken);
+    Room *rooms = calloc(roomData->size, sizeof(Room));
+    for (u32 i = 0; i < roomData->size; ++i) {
+        room_set(&rooms[i], vector_index(roomData, i));
+    }
+
+    Room *currentRoom = rooms;
 
     free(data);
     free(tokens);
@@ -48,13 +52,17 @@ int main(int argc, char *argv[]) {
 
         Vector *words = parse_words(inputStr);
 
-        for (u32 i = 0; i < words->size; ++i) {
-            String *s = (String *)vector_index(words, i);
-            printf("%s ", s->characters);
-        }
-        printf("\n");
+        // for (u32 i = 0; i < words->size; ++i) {
+        //     String *s = (String *)vector_index(words, i);
+        //     printf("%s ", s->characters);
+        // }
+        // printf("\n");
 
         Verb verb = parse_verb(words);
+
+        if (verb == VERB_LOOK) {
+            room_look(currentRoom);
+        }
 
         vector_free(words);
         string_free(inputStr);
