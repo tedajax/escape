@@ -29,7 +29,6 @@ void vector_free(Vector *self) {
 
 void vector_setFreeFunc(Vector *self, free_func freeFunc) {
 	assert(self);
-	assert(freeFunc);
 	self->freeFunc = freeFunc;
 }
 

@@ -9,6 +9,7 @@
 #include "room.h"
 
 typedef struct world_t {
+    JsonToken *worldData;
     u32 roomCount;
     Room *rooms;
 } World;

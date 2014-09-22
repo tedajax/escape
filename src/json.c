@@ -111,12 +111,12 @@ JsonToken *json_token_set_type(JsonToken *self, JsonTokenType type) {
 
         case JS_TOKEN_OBJECT:
             self->data = (void *)hashtable_new(JSON_DEFAULT_HASHTABLE_BUCKETS,
-                                               json_token_free_void);
+                                               NULL);
             break;
 
         case JS_TOKEN_ARRAY:
             self->data = (void *)vector_new(JSON_DEFAULT_VECTOR_SIZE,
-                                            json_token_free_void);
+                                            NULL);
             break;
 
         case JS_TOKEN_STRING:
@@ -217,12 +217,31 @@ JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const cha
     self->id = id;
     self->parent = token.parent;
     self->children = token.size;
+    self->last = false;
 
     return self;
 }
 
 void json_token_free(JsonToken *self) {
-    // TODO: this
+    u32 count = 0;
+    JsonToken token;
+    do {
+        token = self[count++];
+        if (token.data) {
+            switch (token.type) {
+                case JS_TOKEN_NULL:
+                case JS_TOKEN_INTEGER:
+                case JS_TOKEN_NUMBER:
+                case JS_TOKEN_BOOLEAN:
+                    free(token.data);
+                    break;
+
+                case JS_TOKEN_STRING: string_free((String *)token.data); break;
+                case JS_TOKEN_ARRAY: vector_free((Vector *)token.data); break;
+                case JS_TOKEN_OBJECT: hashtable_free((Hashtable *)token.data); break;
+            }
+        }
+    } while (!token.last);
 }
 
 void json_token_free_void(void *self) {
@@ -239,6 +258,7 @@ void json_token_print(JsonToken *self) {
     switch (self->type) {
         case JS_TOKEN_NULL: printf("null"); break;
         case JS_TOKEN_STRING: printf("%s", ((String *)self->data)->characters); break;
+        case JS_TOKEN_INTEGER: printf("%d", *(i32 *)self->data); break;
         case JS_TOKEN_NUMBER: printf("%f", *(f64 *)self->data); break;
         case JS_TOKEN_BOOLEAN: printf("%s", (*(bool *)self->data) ? "true" : "false"); break;
         case JS_TOKEN_ARRAY:
@@ -430,6 +450,8 @@ JsonToken *json_build_tokens_length(jsmntok_t *tokens, size_t num, const char *j
             }
         }
     }
+
+    jsonTokens[currentId - 1].last = true;
 
     return jsonTokens;
 }

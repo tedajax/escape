@@ -5,6 +5,8 @@ void world_free(World *self) {
         room_free(&self->rooms[i]);
     }
 
+    json_token_free(self->worldData);
+
     free(self);
 }
 
@@ -12,8 +14,8 @@ void world_load(World *self, const char *filename) {
     assert(self);
     assert(filename);
 
-    JsonToken *root = json_parse(filename);
-    Vector *roomVec = JSON_VECTOR(json_obj_get_array(root, "rooms"));
+    self->worldData = json_parse(filename);
+    Vector *roomVec = JSON_VECTOR(json_obj_get_array(self->worldData, "rooms"));
 
     assert(roomVec);
 
@@ -23,6 +25,8 @@ void world_load(World *self, const char *filename) {
     for (u32 i = 0; i < roomVec->size; ++i) {
         room_set(&self->rooms[i], vector_index(roomVec, i));
     }
+
+
 }
 
 Room *world_get_room(World *self, i32 id) {

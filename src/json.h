@@ -29,6 +29,7 @@ typedef enum json_token_type_e {
 typedef struct json_token_t {
     JsonTokenType type;
     int id;
+    bool last;
     int children;
     int parent;
     void *data;
