@@ -82,6 +82,17 @@ void game_do_action(Game *self, Action action) {
         case VERB_QUIT:
             self->run = false;
             return;
+
+        case VERB_INVALID:
+        case VERB_LAST:
+            return;
+
+        case VERB_GO:
+        case VERB_TAKE:
+        case VERB_USE:
+        case VERB_HELP:
+            //Todo
+            return;
     }
 
     if (destId > 0) {

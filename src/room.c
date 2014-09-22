@@ -94,7 +94,7 @@ void room_get_exit_names(Room *self, char *dest) {
     const char *andStr = " and ";
     const char *periodStr = ".";
 
-    char *exitEnd = (exitCount == 2) ? andStr : commaStr;
+    const char *exitEnd = (exitCount == 2) ? andStr : commaStr;
 
     i32 exitsNamed = 0;
     u32 currentIndex = 0;

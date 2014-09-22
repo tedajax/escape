@@ -239,7 +239,7 @@ void json_token_print(JsonToken *self) {
     switch (self->type) {
         case JS_TOKEN_NULL: printf("null"); break;
         case JS_TOKEN_STRING: printf("%s", ((String *)self->data)->characters); break;
-        case JS_TOKEN_NUMBER: printf("%f", (f64 *)self->data); break;
+        case JS_TOKEN_NUMBER: printf("%f", *(f64 *)self->data); break;
         case JS_TOKEN_BOOLEAN: printf("%s", (*(bool *)self->data) ? "true" : "false"); break;
         case JS_TOKEN_ARRAY:
         case JS_TOKEN_OBJECT: printf("todo"); break;
