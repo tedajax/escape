@@ -43,3 +43,15 @@ Verb parse_verb(Vector *words) {
 
     return result;
 }
+
+Action parse_action(Vector *words) {
+    assert(words);
+    assert(words->size > 0);
+
+    Action result;
+    result.verb = parse_verb(words);
+    result.subjId = -1;
+    result.secSubjId = -1;
+
+    return result;
+}

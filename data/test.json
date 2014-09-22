@@ -12,7 +12,7 @@
         {
             "id": 2,
             "name": "room_2",
-            "look_desc": "Easten end of the hallway.  Nothing to see here.",
+            "look_desc": "Eastern end of the hallway.  Nothing to see here.",
             "connections": {
                 "west": 1
             }

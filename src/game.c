@@ -23,9 +23,9 @@ int game_run(Game *self, int argc, char *argv[]) {
     self->currentRoom = world_get_room(self->world, 1);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
-    bool run = init_tables();
+    self->run = init_tables();
 
-    while (run) {
+    while (self->run) {
         memset(input, 0, MAX_INPUT_LENGTH);
 
         printf("> ");
@@ -43,20 +43,12 @@ int game_run(Game *self, int argc, char *argv[]) {
         }
 
         Vector *words = parse_words(inputStr);
-        Verb verb = parse_verb(words);
-
-        if (verb == VERB_LOOK) {
-            room_look(self->currentRoom);
-        }
+        Action action = parse_action(words);
+        
+        game_do_action(self, action);
 
         vector_free(words);
         string_free(inputStr);
-
-        printf("Verb: %d\n", verb);
-
-        if (verb == VERB_QUIT) {
-            run = false;
-        }
     }
 
     free(input);
@@ -64,4 +56,40 @@ int game_run(Game *self, int argc, char *argv[]) {
     printf("Done...\n");
 
     return 0;
+}
+
+void game_do_action(Game *self, Action action) {
+    Verb verb = action.verb;
+
+    i32 destId = 0;
+
+    switch (verb) {
+        case VERB_LOOK:
+            room_look(self->currentRoom);
+            break;
+
+        case VERB_EAST:
+        case VERB_WEST:
+        case VERB_NORTH:
+        case VERB_SOUTH:
+        case VERB_UP:
+        case VERB_DOWN:
+            destId = self->currentRoom->exits[verb - VERB_EAST];
+            if (destId == 0) { destId = -1; }
+            break;
+
+        case VERB_QUIT:
+            self->run = false;
+            return;
+    }
+
+    if (destId > 0) {
+        Room *destination = world_get_room(self->world, destId);
+        if (destination != NULL) {
+            self->currentRoom = destination;
+            room_look(self->currentRoom);
+        }
+    } else if (destId == -1) {
+        printf("No exit in that direction.\n");
+    }
 }

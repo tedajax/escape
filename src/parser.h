@@ -16,5 +16,6 @@
 bool parse_input_valid(String *input);
 Vector *parse_words(String *input);
 Verb parse_verb(Vector *words);
+Action parse_action(Vector *words);
 
 #endif

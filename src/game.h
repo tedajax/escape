@@ -16,11 +16,13 @@ const size_t MAX_INPUT_LENGTH;
 typedef struct game_t {
     World *world;
     Room *currentRoom;
+    bool run;
 } Game;
 
 Game *game_new();
 void game_free(Game *self);
 
 int game_run(Game *self, int argc, char *argv[]);
+void game_do_action(Game *self, Action action);
 
 #endif

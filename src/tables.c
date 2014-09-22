@@ -33,6 +33,10 @@ bool init_verb_table() {
     ADD_VERB("n",       VERB_NORTH);
     ADD_VERB("south",   VERB_SOUTH);
     ADD_VERB("s",       VERB_SOUTH);
+    ADD_VERB("up",      VERB_UP);
+    ADD_VERB("u",      VERB_UP);
+    ADD_VERB("down",      VERB_DOWN);
+    ADD_VERB("d",       VERB_DOWN);
 
     ADD_VERB("go",      VERB_GO);
     ADD_VERB("g",       VERB_GO);
