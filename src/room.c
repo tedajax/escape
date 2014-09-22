@@ -38,7 +38,7 @@ void room_look(Room *self) {
     if (exitCount == 0) {
         printf("  There are no exits... what have you done?");
     } else if (exitCount == 1) {
-        printf("  There is one exit to the %s.", room_get_exit_name(self));
+        printf("  There is one exit to the %s%s%s.", COLORS[RED], room_get_exit_name(self), COLORS[WHITE]);
     } else {
         char *directions = calloc(64, sizeof(char));
         room_get_exit_names(self, directions);
@@ -93,8 +93,12 @@ void room_get_exit_names(Room *self, char *dest) {
     for (u32 i = 0; i < EXIT_COUNT; ++i) {
         if (self->exits[i] > 0) {
             ++exitsNamed;
+            strcpy(&dest[currentIndex], COLORS[RED]);
+            currentIndex += COLOR_LEN;
             strcpy(&dest[currentIndex], EXIT_NAMES[i]);
             currentIndex += strlen(EXIT_NAMES[i]);
+            strcpy(&dest[currentIndex], COLORS[WHITE]);
+            currentIndex += COLOR_LEN;
             strcpy(&dest[currentIndex], exitEnd);
             currentIndex += strlen(exitEnd);
         }

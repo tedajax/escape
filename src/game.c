@@ -19,6 +19,8 @@ void game_free(Game *self) {
 int game_run(Game *self, int argc, char *argv[]) {
     assert(self);
 
+    SET_COLOR(WHITE);
+
     world_load(self->world, "data/test.json");
     self->currentRoom = world_get_room(self->world, 1);
     room_look(self->currentRoom);
