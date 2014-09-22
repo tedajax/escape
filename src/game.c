@@ -21,6 +21,7 @@ int game_run(Game *self, int argc, char *argv[]) {
 
     world_load(self->world, "data/test.json");
     self->currentRoom = world_get_room(self->world, 1);
+    room_look(self->currentRoom);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
     self->run = init_tables();
