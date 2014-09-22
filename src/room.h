@@ -16,9 +16,7 @@ typedef enum room_exit_e {
     EXIT_COUNT
 } RoomExit;
 
-const char *EXIT_NAMES[EXIT_COUNT] = {
-    "east", "west", "north", "south", "up", "down"
-};
+extern const char *EXIT_NAMES[EXIT_COUNT];
 
 typedef struct room_t {
     i32 id;

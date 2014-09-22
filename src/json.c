@@ -70,6 +70,18 @@ jsmntok_t *json_tokenize(const char *js) {
     return tokens;
 }
 
+JsonToken *json_parse(const char *filename) {
+    char *data = json_load_file(filename);
+    jsmntok_t *tokens = json_tokenize(data);
+
+    JsonToken *root = json_build_from_tokens(tokens, data);
+
+    free(tokens);
+    free(data);
+
+    return root;
+}
+
 JsonToken *json_token_new(JsonTokenType type) {
     JsonToken *self = calloc(1, sizeof(JsonToken));
 

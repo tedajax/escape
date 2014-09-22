@@ -41,6 +41,7 @@ const char *json_token_type_string(JsonTokenType type);
 
 char *json_load_file(const char *filename);
 jsmntok_t *json_tokenize(const char *js);
+JsonToken *json_parse(const char *filename);
 
 JsonToken *json_token_new(JsonTokenType type);
 JsonToken *json_token_set_type(JsonToken *self, JsonTokenType type);

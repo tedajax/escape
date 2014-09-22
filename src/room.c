@@ -1,5 +1,9 @@
 #include "room.h"
 
+const char *EXIT_NAMES[EXIT_COUNT] = {
+    "east", "west", "north", "south", "up", "down"
+};
+
 Room *room_new() {
     Room *self = calloc(1, sizeof(Room));
     return self;
