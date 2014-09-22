@@ -50,6 +50,16 @@ Action parse_action(Vector *words) {
 
     Action result;
     result.verb = parse_verb(words);
+
+    VerbPattern pattern = G_VERB_PATTERNS[result.verb];
+
+    if (pattern & VP_COMMAND) {
+        if (words->size > 1) {
+            String *arg = vector_index(words, 1);
+            result.cmdArg = arg->characters;
+        }
+    }
+
     result.subjId = -1;
     result.secSubjId = -1;
 

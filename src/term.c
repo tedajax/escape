@@ -1,6 +1,7 @@
 #include "term.h"
 
-#ifdef COLORS_ENABLED
+int BASE = 7;
+int g_enable_colors = 0;
 
 const char *COLORS[COLOR_COUNT] = {
     "\033[1;30m",
@@ -23,15 +24,3 @@ const char *BG_COLORS[COLOR_COUNT] = {
     "\033[1;46m",
     "\033[1;47m"
 };
-
-#else
-
-const char *COLORS[COLOR_COUNT] = {
-    "", "", "", "", "", "", "", ""
-};
-
-const char *BG_COLORS[COLOR_COUNT] = {
-    "", "", "", "", "", "", "", ""
-};
-
-#endif

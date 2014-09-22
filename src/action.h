@@ -14,6 +14,7 @@ typedef struct action_t {
     Verb verb;
     i32 subjId;
     i32 secSubjId;
+    const char *cmdArg;
 } Action;
 
 Action *action_new();

@@ -24,5 +24,6 @@ void game_free(Game *self);
 
 int game_run(Game *self, int argc, char *argv[]);
 void game_do_action(Game *self, Action action);
+void game_do_command(Game *self, Action action);
 
 #endif

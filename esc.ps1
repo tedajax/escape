@@ -1,1 +1,1 @@
-ansicon escape.exe
+ansicon escape.exe --color

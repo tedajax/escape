@@ -19,6 +19,12 @@ void game_free(Game *self) {
 int game_run(Game *self, int argc, char *argv[]) {
     assert(self);
 
+    for (int ai = 0; ai < argc; ++ai) {
+        if (strcmp(argv[ai], "--color") == 0) {
+            g_enable_colors = 1;
+        }
+    }
+
     SET_COLOR(WHITE);
 
     world_load(self->world, "data/test.json");
@@ -48,7 +54,11 @@ int game_run(Game *self, int argc, char *argv[]) {
         Vector *words = parse_words(inputStr);
         Action action = parse_action(words);
         
-        game_do_action(self, action);
+        if (G_VERB_PATTERNS[action.verb] & VP_COMMAND) {
+            game_do_command(self, action);
+        } else {
+            game_do_action(self, action);
+        }
 
         vector_free(words);
         string_free(inputStr);
@@ -67,6 +77,8 @@ void game_do_action(Game *self, Action action) {
     i32 destId = 0;
 
     switch (verb) {
+        default: break;
+
         case VERB_LOOK:
             room_look(self->currentRoom);
             break;
@@ -105,5 +117,61 @@ void game_do_action(Game *self, Action action) {
         }
     } else if (destId == -1) {
         printf("No exit in that direction.\n");
+    }
+}
+
+void game_do_command(Game *self, Action action) {
+    switch (action.verb) {
+        default: return;
+
+        case VERB_QUIT:
+            self->run = false;
+            break;
+
+        case VERB_HELP:
+            printf("TODO: Help\n");
+            break;
+
+        case VERB_SAVE:
+            printf("TODO: Save\n");
+            break;
+
+        case VERB_LOAD:
+            printf("TODO: Load\n");
+            break;
+
+        case VERB_CONTINUE:
+            printf("TODO: Continue\n");
+            break;
+
+        case VERB_COLOR:
+            if (strcmp(action.cmdArg, "black") == 0) {
+                SET_COLOR(BLACK);
+                BASE = BLACK;
+            } else if (strcmp(action.cmdArg, "red") == 0) {
+                SET_COLOR(RED);
+                BASE = RED;
+            } else if (strcmp(action.cmdArg, "green") == 0) {
+                SET_COLOR(GREEN);
+                BASE = GREEN;
+            } else if (strcmp(action.cmdArg, "yellow") == 0) {
+                SET_COLOR(YELLOW);
+                BASE = YELLOW;
+            } else if (strcmp(action.cmdArg, "blue") == 0) {
+                SET_COLOR(BLUE);
+                BASE = BLUE;
+            } else if (strcmp(action.cmdArg, "magenta") == 0) {
+                SET_COLOR(MAGENTA);
+                BASE = MAGENTA;
+            } else if (strcmp(action.cmdArg, "cyan") == 0) {
+                SET_COLOR(CYAN);
+                BASE = CYAN;
+            } else if (strcmp(action.cmdArg, "white") == 0) {
+                SET_COLOR(WHITE);
+                BASE = WHITE;
+            } else {
+                printf("Unknown color: %s\n", action.cmdArg);
+            }
+            break;
     }
 }

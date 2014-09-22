@@ -1,6 +1,6 @@
 TARGET		= escape
 CC			= gcc
-CFLAGS		= -std=c99 -Wall -I. -g -DCOLORS_ENABLED
+CFLAGS		= -std=c99 -Wall -I. -g
 
 LINKER		= gcc -o
 LFLAGS		= -Wall -I. -lm

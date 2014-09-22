@@ -93,11 +93,11 @@ void room_get_exit_names(Room *self, char *dest) {
     for (u32 i = 0; i < EXIT_COUNT; ++i) {
         if (self->exits[i] > 0) {
             ++exitsNamed;
-            strcpy(&dest[currentIndex], COLORS[RED]);
+            strcpy(&dest[currentIndex], GET_COLOR(RED));
             currentIndex += COLOR_LEN;
             strcpy(&dest[currentIndex], EXIT_NAMES[i]);
             currentIndex += strlen(EXIT_NAMES[i]);
-            strcpy(&dest[currentIndex], COLORS[WHITE]);
+            strcpy(&dest[currentIndex], GET_COLOR(BASE));
             currentIndex += COLOR_LEN;
             strcpy(&dest[currentIndex], exitEnd);
             currentIndex += strlen(exitEnd);

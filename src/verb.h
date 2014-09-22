@@ -24,6 +24,12 @@ typedef enum verb_e {
     VERB_QUIT,
     VERB_HELP,
 
+    VERB_SAVE,
+    VERB_LOAD,
+    VERB_CONTINUE,
+
+    VERB_COLOR,
+
     VERB_LAST
 } Verb;
 
@@ -37,7 +43,10 @@ typedef enum verb_pattern_e {
     VP_VERB_SUBJECT            = 0x2,
 
     // e.g. Use Scroll on Rat, Take Apple from Shelf
-    VP_VERB_SUBJECT_SUBJECT    = 0x4
+    VP_VERB_SUBJECT_SUBJECT    = 0x4,
+
+    // e.g. save, load file1, color red
+    VP_COMMAND            = 0x8,
 } VerbPattern;
 
 bool verb_valid(Verb verb);
