@@ -5,23 +5,37 @@
 #include "containers.h"
 #include "json.h"
 
+typedef enum room_exit_e {
+    EXIT_EAST = 0,
+    EXIT_WEST,
+    EXIT_NORTH,
+    EXIT_SOUTH,
+    EXIT_UP,
+    EXIT_DOWN,
+
+    EXIT_COUNT
+} RoomExit;
+
+const char *EXIT_NAMES[EXIT_COUNT] = {
+    "east", "west", "north", "south", "up", "down"
+};
+
 typedef struct room_t {
     i32 id;
-    i32 exit_east;
-    i32 exit_west;
-    i32 exit_north;
-    i32 exit_south;
-    i32 exit_up;
-    i32 exit_down;
+    i32 exits[EXIT_COUNT];
     String *name;
     String *description;
     Vector *items;
 } Room;
 
 Room *room_new();
+void room_free(Room *self);
+
 Room *room_set(Room *self, JsonToken *data);
 void room_look(Room *self);
 
-void room_free(Room *self);
+i32 room_exit_count(Room *self);
+const char *room_get_exit_name(Room *self);
+void room_get_exit_names(Room *self, char *dest);
 
 #endif
