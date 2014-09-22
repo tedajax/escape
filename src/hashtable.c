@@ -116,6 +116,7 @@ void hashtable_free(Hashtable *self) {
 		}
 	}
 
+	free(self->buckets);
 	free(self);
 }
 

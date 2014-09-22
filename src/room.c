@@ -11,14 +11,6 @@ Room *room_new() {
 
 void room_free(Room *self) {
     assert(self);
-
-    if (self->description) {
-        string_free(self->description);
-    }
-
-    if (self->name) {
-        string_free(self->name);
-    }
 }
 
 Room *room_set(Room *self, JsonToken *data) {
@@ -32,8 +24,7 @@ Room *room_set(Room *self, JsonToken *data) {
             self->exits[i] = json_obj_get_int(connections, EXIT_NAMES[i]);
         }
     }
-    json_token_free(connections);
-
+    
     return self;
 }
 

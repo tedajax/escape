@@ -46,7 +46,7 @@ JsonToken *json_parse(const char *filename);
 
 JsonToken *json_token_new(JsonTokenType type);
 JsonToken *json_token_set_type(JsonToken *self, JsonTokenType type);
-JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const char *js);
+JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const char *js, bool last);
 void json_token_free(JsonToken *self);
 void json_token_free_void(void *self);
 void json_token_print(JsonToken *self);

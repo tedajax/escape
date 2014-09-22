@@ -142,7 +142,7 @@ JsonToken *json_token_set_type(JsonToken *self, JsonTokenType type) {
     return self;
 }
 
-JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const char *js) {
+JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const char *js, bool last) {
     JsonTokenType type = JS_TOKEN_NULL;
 
     char c = 0;
@@ -214,10 +214,13 @@ JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const cha
         default: break;
     }
 
+    free(dataStr);
+
     self->id = id;
     self->parent = token.parent;
     self->children = token.size;
-    self->last = false;
+    self->last = last;
+    printf("%s\n", (self->last) ? "true" : "false");
 
     return self;
 }
@@ -227,6 +230,7 @@ void json_token_free(JsonToken *self) {
     JsonToken token;
     do {
         token = self[count++];
+        printf("%d\n", token.id);
         if (token.data) {
             switch (token.type) {
                 case JS_TOKEN_NULL:
@@ -236,12 +240,14 @@ void json_token_free(JsonToken *self) {
                     free(token.data);
                     break;
 
-                case JS_TOKEN_STRING: string_free((String *)token.data); break;
+                case JS_TOKEN_STRING: printf("%d\n", self->id); string_free((String *)(token.data)); break;
                 case JS_TOKEN_ARRAY: vector_free((Vector *)token.data); break;
                 case JS_TOKEN_OBJECT: hashtable_free((Hashtable *)token.data); break;
             }
         }
     } while (!token.last);
+
+    free(self);
 }
 
 void json_token_free_void(void *self) {
@@ -419,7 +425,7 @@ JsonToken *json_build_tokens_length(jsmntok_t *tokens, size_t num, const char *j
 
     int currentId = 0;
     for (u32 i = 0; i < num; ++i) {
-        json_token_create(&jsonTokens[i], tokens[i], currentId++, js);
+        json_token_create(&jsonTokens[i], tokens[i], currentId++, js, (i == num - 1));
     }
 
     for (u32 i = 0; i < num - 1; ++i) {
@@ -450,8 +456,6 @@ JsonToken *json_build_tokens_length(jsmntok_t *tokens, size_t num, const char *j
             }
         }
     }
-
-    jsonTokens[currentId - 1].last = true;
 
     return jsonTokens;
 }

@@ -4,6 +4,7 @@ void world_free(World *self) {
     for (u32 i = 0; i < self->roomCount; ++i) {
         room_free(&self->rooms[i]);
     }
+    free(self->rooms);
 
     json_token_free(self->worldData);
 
@@ -25,8 +26,6 @@ void world_load(World *self, const char *filename) {
     for (u32 i = 0; i < roomVec->size; ++i) {
         room_set(&self->rooms[i], vector_index(roomVec, i));
     }
-
-
 }
 
 Room *world_get_room(World *self, i32 id) {
