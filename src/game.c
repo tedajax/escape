@@ -19,6 +19,28 @@ void game_free(Game *self) {
 int game_run(Game *self, int argc, char *argv[]) {
     assert(self);
 
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        return 1;
+    }
+
+    self->window = SDL_CreateWindow("Escape",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        200,
+        200,
+        SDL_WINDOW_SHOWN);
+
+    if (!self->window) {
+        return 2;
+    }
+
+    self->renderer = SDL_CreateRenderer(self->window, -1, SDL_RENDERER_ACCELERATED);
+    if (!self->renderer) {
+        return 3;
+    }
+
+    self->screen = SDL_GetWindowSurface(self->window);
+
     for (int ai = 0; ai < argc; ++ai) {
         if (strcmp(argv[ai], "--color") == 0) {
             g_enable_colors = 1;

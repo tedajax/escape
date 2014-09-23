@@ -11,11 +11,16 @@
 #include "parser.h"
 #include "tables.h"
 
+#include <SDL2/SDL.h>
+
 const size_t MAX_INPUT_LENGTH;
 
 typedef struct game_t {
     World *world;
     Room *currentRoom;
+    SDL_Window *window;
+    SDL_Renderer *renderer;
+    SDL_Surface *screen;
     bool run;
 } Game;
 
