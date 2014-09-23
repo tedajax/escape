@@ -16,27 +16,40 @@ void game_free(Game *self) {
     free(self);
 }
 
-int game_run(Game *self, int argc, char *argv[]) {
-    assert(self);
+bool game_init(Game *self, int argc, char *argv[]) {
+    SET_COLOR(WHITE);
+
+    world_load(self->world, "data/test.json");
+    self->currentRoom = world_get_room(self->world, 1);
+    
+    self->run = init_tables();
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-        return 1;
+        SDL_PRINT_ERROR();
+        return false;
+    }
+
+    if (TTF_Init() != 0) {
+        printf("TTF_Init: %s\n", TTF_GetError());
+        return false;
     }
 
     self->window = SDL_CreateWindow("Escape",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        200,
-        200,
+        800,
+        600,
         SDL_WINDOW_SHOWN);
 
     if (!self->window) {
-        return 2;
+        SDL_PRINT_ERROR();
+        return false;
     }
 
     self->renderer = SDL_CreateRenderer(self->window, -1, SDL_RENDERER_ACCELERATED);
     if (!self->renderer) {
-        return 3;
+        SDL_PRINT_ERROR();
+        return false;
     }
 
     self->screen = SDL_GetWindowSurface(self->window);
@@ -47,43 +60,70 @@ int game_run(Game *self, int argc, char *argv[]) {
         }
     }
 
-    SET_COLOR(WHITE);
+    return true;
+}
 
-    world_load(self->world, "data/test.json");
-    self->currentRoom = world_get_room(self->world, 1);
+int game_run(Game *self, int argc, char *argv[]) {
+    assert(self);
+
+    if (!game_init(self, argc, argv)) {
+        return 1;
+    }
+
+    TTF_Font *font = TTF_OpenFont("assets/modeseven.ttf", 16);
+    if (!font) {
+        printf("TTF_OpenFont: %s\n", TTF_GetError());
+        return 1;
+    }
+
+    SDL_Color color = { 255, 255, 255 };
+    SDL_Surface *textSurface = TTF_RenderText_Solid(font, "THEQUICKBROWNFOXJUMPEDOVERTHELAZYDOGthequickbrownfoxjumpedoverthelazydog01234567", color);
+    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(self->renderer, textSurface);
+
     room_look(self->currentRoom);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
-    self->run = init_tables();
-
+    
     while (self->run) {
-        memset(input, 0, MAX_INPUT_LENGTH);
+        // memset(input, 0, MAX_INPUT_LENGTH);
 
-        printf("> ");
-        fgets(input, MAX_INPUT_LENGTH, stdin);
+        // printf("> ");
+        // fgets(input, MAX_INPUT_LENGTH, stdin);
 
-        size_t inputLen = strlen(input);
-        input[inputLen - 1] = '\0';
+        // size_t inputLen = strlen(input);
+        // input[inputLen - 1] = '\0';
 
-        String *inputStr = S(input);
+        // String *inputStr = S(input);
 
-        if (!parse_input_valid(inputStr)) {
-            printf("I don't understand...\n");
-            string_free(inputStr);
-            continue;
-        }
+        // if (!parse_input_valid(inputStr)) {
+        //     printf("I don't understand...\n");
+        //     string_free(inputStr);
+        //     continue;
+        // }
 
-        Vector *words = parse_words(inputStr);
-        Action action = parse_action(words);
+        // Vector *words = parse_words(inputStr);
+        // Action action = parse_action(words);
         
-        if (G_VERB_PATTERNS[action.verb] & VP_COMMAND) {
-            game_do_command(self, action);
-        } else {
-            game_do_action(self, action);
+        // if (G_VERB_PATTERNS[action.verb] & VP_COMMAND) {
+        //     game_do_command(self, action);
+        // } else {
+        //     game_do_action(self, action);
+        // }
+
+        // vector_free(words);
+        // string_free(inputStr);
+
+        SDL_SetRenderDrawColor(self->renderer, 0, 0, 0, 255);
+        SDL_RenderClear(self->renderer);
+
+        int width, height;
+        SDL_QueryTexture(textTexture, NULL, NULL, &width, &height);
+        for (int i = 0; i < 43; ++i) {
+            SDL_Rect rect = {0, i * 14 - 2, width, height};
+            SDL_RenderCopy(self->renderer, textTexture, NULL, &rect);
         }
 
-        vector_free(words);
-        string_free(inputStr);
+        SDL_RenderPresent(self->renderer);
     }
 
     free(input);

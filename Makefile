@@ -1,13 +1,14 @@
 ifeq ($(OS),Windows_NT) # If windows
-	SDL_LIB_ROOT = C:/dev/SDL2-2.0.3/i686-w64-mingw32/lib
-	SDL_LFLAGS = -L$(SDL_LIB_ROOT) -lmingw32 -lSDL2main -lSDL2
+	LIB_ROOT = C:/dev/lib/x86
+	INC_ROOT = C:/dev/include
+	SDL_LFLAGS = -L$(LIB_ROOT) -lmingw32 -lSDL2main -lSDL2 -lSDL2_ttf
 else
 	SDL_LFLAGS = -lSDL2main -lSDL2
 endif
 
 TARGET		= escape
 CC			= gcc
-CFLAGS		= -std=c99 -Wall -I. -g $(SDL_LFLAGS)
+CFLAGS		= -std=c99 -Wall -I. -I$(INC_ROOT) -g $(SDL_LFLAGS)
 
 LINKER		= gcc -o
 LFLAGS		= -Wall -I. -lm
