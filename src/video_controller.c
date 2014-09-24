@@ -162,7 +162,6 @@ void videocontroller_update_glyphs(VideoController *self) {
             Range everything = { 0, self->size - 1 };
             videocontroller_update_range(self, everything);
         }
-        printf("updating glyphs\n");
         self->dirty = false;
         SDL_UnlockMutex(self->dataMutex);
     } else {
@@ -191,7 +190,6 @@ void videocontroller_render_glyphs(VideoController *self) {
             u32 i = row * self->width + col;
 
             SDL_Rect rect = { col * 10, row * 14 - 2, self->glyphWidth, self->glyphHeight };
-            // printf("%d\n", self->glyphs[5].rect.x);
             SDL_RenderCopy(self->renderer, self->glyphTexture, &self->glyphs[i].rect, &rect);
         }
     }

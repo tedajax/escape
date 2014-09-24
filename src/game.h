@@ -28,6 +28,7 @@ typedef struct game_t {
     SDL_Surface *screen;
     VideoController *video;
     SDL_Thread *updateThread;
+    u32 updateDelay;
     bool run;
 } Game;
 

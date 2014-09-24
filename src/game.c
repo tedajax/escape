@@ -67,6 +67,8 @@ bool game_init(Game *self, int argc, char *argv[]) {
     videocontroller_open_font(self->video, "assets/modeseven.ttf", 14);
     videocontroller_update_glyphs(self->video);
 
+    self->updateDelay = 100;
+
     return true;
 }
 
@@ -87,9 +89,26 @@ int game_run(Game *self, int argc, char *argv[]) {
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
     
+    u32 lastTickCount = 0;
+    u32 secondsTimer = 0;
+    u32 frames = 0;
     while (self->run) {
         game_proc_events(self);
+
+        u32 ticks = SDL_GetTicks();
+        u32 delta = ticks - lastTickCount;
+        lastTickCount = ticks;
+
         game_render(self);
+
+        ++frames;
+        secondsTimer += delta;
+
+        if (secondsTimer >= 1000) {
+            printf("FPS: %d\n", frames);
+            secondsTimer = 0;
+            frames = 0;
+        }
     }
 
     free(input);
@@ -105,10 +124,6 @@ int game_update(void *pself) {
     u32 x = 0;
     u32 y = 0;
     u32 ci = 0;
-
-    // u32 lastTickCount = 0;
-    // u32 secondsTimer = 0;
-    // u32 frames = 0;
 
     while (self->run) {
         // memset(input, 0, MAX_INPUT_LENGTH);
@@ -138,38 +153,24 @@ int game_update(void *pself) {
 
         // vector_free(words);
         // string_free(inputStr);
-
-        // u32 ticks = SDL_GetTicks();
-        // u32 delta = ticks - lastTickCount;
-        // lastTickCount = ticks;
         
         u32 v = (ci + 64) + ((rand() % 7 + 1) << 8);
         videocontroller_poke(self->video, x, y, v);
-        videocontroller_update_glyphs(self->video);
-        printf("%d\n", self->video->data[y * self->video->width + x]);
-        
+       
         ++x;
         if (x >= self->video->width) {
             x = 0;
             ++y;
             if (y >= self->video->height) {
                 videocontroller_form_feed(self->video);
-                videocontroller_update_glyphs(self->video);
                 y = self->video->height - 1;
             }
         }
         ++ci; if (ci >= 26) { ci = 0; }
 
-        // SDL_Delay(1000);
+        videocontroller_update_glyphs(self->video);
 
-        // ++frames;
-        // secondsTimer += delta;
-
-        // if (secondsTimer >= 1000) {
-        //     printf("FPS: %d\n", frames);
-        //     secondsTimer = 0;
-        //     frames = 0;
-        // }
+        SDL_Delay(self->updateDelay);
     }
 
     return 1;
@@ -204,6 +205,24 @@ void game_proc_events(Game *self) {
                 } else if (event.key.keysym.sym == SDLK_RETURN) {
                     videocontroller_form_feed(self->video);
                     videocontroller_update_glyphs(self->video);
+                } else if (event.key.keysym.sym == SDLK_MINUS) {
+                    if (self->updateDelay > 10) {
+                        self->updateDelay -= 10;
+                    } else if (self->updateDelay > 1) {
+                        --self->updateDelay;
+                    } else {
+                        self->updateDelay = 0;
+                    }
+
+                    printf("Update Delay: %d\n", self->updateDelay);
+                } else if (event.key.keysym.sym == SDLK_EQUALS) {
+                    if (self->updateDelay >= 10) {
+                        self->updateDelay += 10;
+                    } else {
+                        ++self->updateDelay;
+                    }
+                    
+                    printf("Update Delay: %d\n", self->updateDelay);
                 }
                 break;
 
