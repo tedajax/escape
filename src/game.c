@@ -77,19 +77,40 @@ int game_run(Game *self, int argc, char *argv[]) {
         return 1;
     }
 
+    //self->renderThread = SDL_CreateThread(game_render, "render_thread", (void *)self);
+    self->updateThread = SDL_CreateThread(game_update, "update_thread", (void *)self);
+    if (self->updateThread == NULL) {
+        printf("SDL_CreateThread: %s\n", SDL_GetError());
+    }
+
     room_look(self->currentRoom);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
     
+    while (self->run) {
+        game_proc_events(self);
+        game_render(self);
+    }
+
+    free(input);
+
+    printf("Done...\n");
+
+    return 0;
+}
+
+int game_update(void *pself) {
+    Game *self = (Game *)pself;
+
     u32 x = 0;
     u32 y = 0;
     u32 ci = 0;
 
-    u32 lastTickCount = 0;
-    u32 secondsTimer = 0;
-    u32 frames = 0;
+    // u32 lastTickCount = 0;
+    // u32 secondsTimer = 0;
+    // u32 frames = 0;
+
     while (self->run) {
-        game_proc_events(self);
         // memset(input, 0, MAX_INPUT_LENGTH);
 
         // printf("> ");
@@ -118,45 +139,49 @@ int game_run(Game *self, int argc, char *argv[]) {
         // vector_free(words);
         // string_free(inputStr);
 
-        u32 ticks = SDL_GetTicks();
-        u32 delta = ticks - lastTickCount;
-        lastTickCount = ticks;
-
-        SDL_SetRenderDrawColor(self->renderer, 0, 0, 0, 255);
-        SDL_RenderClear(self->renderer);
+        // u32 ticks = SDL_GetTicks();
+        // u32 delta = ticks - lastTickCount;
+        // lastTickCount = ticks;
         
         u32 v = (ci + 64) + ((rand() % 7 + 1) << 8);
         videocontroller_poke(self->video, x, y, v);
         videocontroller_update_glyphs(self->video);
-        videocontroller_render_glyphs(self->video);
+        printf("%d\n", self->video->data[y * self->video->width + x]);
+        
         ++x;
         if (x >= self->video->width) {
             x = 0;
             ++y;
             if (y >= self->video->height) {
                 videocontroller_form_feed(self->video);
+                videocontroller_update_glyphs(self->video);
                 y = self->video->height - 1;
             }
         }
         ++ci; if (ci >= 26) { ci = 0; }
 
-        SDL_RenderPresent(self->renderer);
-        
-        ++frames;
-        secondsTimer += delta;
+        // SDL_Delay(1000);
 
-        if (secondsTimer >= 1000) {
-            printf("FPS: %d\n", frames);
-            secondsTimer = 0;
-            frames = 0;
-        }
+        // ++frames;
+        // secondsTimer += delta;
+
+        // if (secondsTimer >= 1000) {
+        //     printf("FPS: %d\n", frames);
+        //     secondsTimer = 0;
+        //     frames = 0;
+        // }
     }
 
-    free(input);
+    return 1;
+}
 
-    printf("Done...\n");
+void game_render(Game *self) {
+    SDL_SetRenderDrawColor(self->renderer, 0, 0, 0, 255);
+    SDL_RenderClear(self->renderer);
 
-    return 0;
+    videocontroller_render_glyphs(self->video);
+
+    SDL_RenderPresent(self->renderer);
 }
 
 void game_proc_events(Game *self) {

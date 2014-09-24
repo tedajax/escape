@@ -16,6 +16,7 @@ VideoController *videocontroller_new(SDL_Renderer *renderer) {
     VideoController *self = (VideoController *)calloc(1, sizeof(VideoController));
     self->renderer = renderer;
     self->dirtyRanges = vector_new(8, free);
+    self->dataMutex = SDL_CreateMutex();
     return self;
 }
 
@@ -149,19 +150,24 @@ void videocontroller_dirty_range(VideoController *self, u32 start, u32 end) {
 void videocontroller_update_glyphs(VideoController *self) {
     if (!self->dirty) { return; }
 
-    if (self->dirtyRanges->size > 0) {
-        for (u32 i = 0; i < self->dirtyRanges->size; ++i) {
-            Range *r = (Range *)vector_index(self->dirtyRanges, i);
-            videocontroller_update_range(self, *r);
+    if (SDL_LockMutex(self->dataMutex) == 0) {
+        if (self->dirtyRanges->size > 0) {
+            for (u32 i = 0; i < self->dirtyRanges->size; ++i) {
+                Range *r = (Range *)vector_index(self->dirtyRanges, i);
+                videocontroller_update_range(self, *r);
+            }
+
+            vector_clear(self->dirtyRanges);
+        } else {
+            Range everything = { 0, self->size - 1 };
+            videocontroller_update_range(self, everything);
         }
-
-        vector_clear(self->dirtyRanges);
+        printf("updating glyphs\n");
+        self->dirty = false;
+        SDL_UnlockMutex(self->dataMutex);
     } else {
-        Range everything = { 0, self->size - 1 };
-        videocontroller_update_range(self, everything);
+        printf("Unable to lock mutex\n");
     }
-
-    self->dirty = false;
 }
 
 void videocontroller_update_range(VideoController *self, Range range) {
@@ -183,7 +189,9 @@ void videocontroller_render_glyphs(VideoController *self) {
     for (u32 row = 0; row < self->height; ++row) {
         for (u32 col = 0; col < self->width; ++col) {
             u32 i = row * self->width + col;
+
             SDL_Rect rect = { col * 10, row * 14 - 2, self->glyphWidth, self->glyphHeight };
+            // printf("%d\n", self->glyphs[5].rect.x);
             SDL_RenderCopy(self->renderer, self->glyphTexture, &self->glyphs[i].rect, &rect);
         }
     }

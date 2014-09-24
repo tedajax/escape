@@ -27,6 +27,7 @@ typedef struct game_t {
     SDL_Renderer *renderer;
     SDL_Surface *screen;
     VideoController *video;
+    SDL_Thread *updateThread;
     bool run;
 } Game;
 
@@ -35,6 +36,8 @@ void game_free(Game *self);
 
 bool game_init(Game *self, int argc, char *argv[]);
 int game_run(Game *self, int argc, char *argv[]);
+int game_update(void *pself);
+void game_render(Game *self);
 void game_proc_events(Game *self);
 void game_do_action(Game *self, Action action);
 void game_do_command(Game *self, Action action);

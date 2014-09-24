@@ -51,6 +51,8 @@ typedef struct video_controller_t {
     Vector *dirtyRanges;
 
     SDL_Renderer *renderer;
+
+    SDL_mutex *dataMutex;
 } VideoController;
 
 VideoController *videocontroller_new(SDL_Renderer *renderer);
