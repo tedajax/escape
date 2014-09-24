@@ -62,7 +62,41 @@ bool videocontroller_open_font(VideoController *self, const char *filename, u32 
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 
+    videocontroller_generate_glyph_table(self);
+
     return true;
+}
+
+void videocontroller_generate_glyph_table(VideoController *self) {
+    //TODO clear existing glyph table
+
+    char *glyphStr = calloc(2, sizeof(char));
+
+    printf("Generating glyphs...\n");
+
+    for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
+        printf("\tColor %d", col);
+        u32 colorPacked = VIDEO_COLORS[col];
+        u8 r = ((colorPacked & 0xFF0000) >> 16);
+        u8 g = ((colorPacked & 0x00FF00) >> 8);
+        u8 b = ((colorPacked & 0x0000FF) >> 0);
+        SDL_Color color = { r, g, b };
+        for (u32 c = 0; c < 256; ++c) {
+            if (c % 32 == 0) {
+                printf(".");
+            }
+            glyphStr[0] = (char)c;
+
+            SDL_Surface *surface = TTF_RenderText_Solid(self->font, glyphStr, color);
+            SDL_Texture *texture = SDL_CreateTextureFromSurface(self->renderer, surface);        
+            SDL_FreeSurface(surface);
+
+            self->glyphTable[col][c] = texture;
+        }
+        printf("\n");
+    }
+
+    free(glyphStr);
 }
 
 void videocontroller_poke(VideoController *self, u32 x, u32 y, u32 value) {
@@ -103,35 +137,15 @@ void videocontroller_update_glyphs(VideoController *self) {
 }
 
 void videocontroller_update_range(VideoController *self, Range range) {
-    char *glyphStr = calloc(2, sizeof(char));
-
     for (u32 i = range.start; i <= range.end; ++i) {
         if (i >= self->size) { break; }
 
         u32 value = self->data[i];
         u32 colorIndex = ((value & 0xF00) >> 8);
-        if (colorIndex >= VIDEO_COLOR_COUNT) { colorIndex = VIDEO_COLOR_WHITE; }
-        u32 colorPacked = VIDEO_COLORS[colorIndex];
-        u8 r = ((colorPacked & 0xFF0000) >> 16);
-        u8 g = ((colorPacked & 0x00FF00) >> 8);
-        u8 b = ((colorPacked & 0x0000FF) >> 0);
-        SDL_Color color = { r, g, b };
-
         char glyph = (value & 0xFF);
-        glyphStr[0] = glyph;
 
-        SDL_Surface *surface = TTF_RenderText_Solid(self->font, glyphStr, color);
-        SDL_Texture *texture = SDL_CreateTextureFromSurface(self->renderer, surface);        
-        SDL_FreeSurface(surface);
-
-        if (self->glyphs[i]) {
-            SDL_DestroyTexture(self->glyphs[i]);
-        }
-
-        self->glyphs[i] = texture;
+        self->glyphs[i] = self->glyphTable[colorIndex][glyph];
     }
-
-    free(glyphStr);
 }
 
 void videocontroller_render_glyphs(VideoController *self) {

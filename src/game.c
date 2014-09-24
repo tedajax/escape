@@ -82,7 +82,12 @@ int game_run(Game *self, int argc, char *argv[]) {
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
     
-    int frame = 0;
+    u32 x = 0;
+    u32 y = 0;
+
+    u32 lastTickCount = 0;
+    u32 secondsTimer = 0;
+    u32 frames = 0;
     while (self->run) {
         game_proc_events(self);
         // memset(input, 0, MAX_INPUT_LENGTH);
@@ -113,19 +118,36 @@ int game_run(Game *self, int argc, char *argv[]) {
         // vector_free(words);
         // string_free(inputStr);
 
+        u32 ticks = SDL_GetTicks();
+        u32 delta = ticks - lastTickCount;
+        lastTickCount = ticks;
+
         SDL_SetRenderDrawColor(self->renderer, 0, 0, 0, 255);
         SDL_RenderClear(self->renderer);
 
-        u32 x = rand() % self->video->width;
-                    u32 y = rand() % self->video->height;
-                    u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
-                    videocontroller_poke(self->video, x, y, v);
-            videocontroller_update_glyphs(self->video);    
-        
+        ++x;
+        if (x >= self->video->width) {
+            x = 0;
+            ++y;
+            if (y >= self->video->height) {
+                y = 0;
+            }
+        }
+        u32 v = ((rand() % 26) + 65) + ((rand() % 7 + 1) << 8);
+        videocontroller_poke(self->video, x, y, v);
+        videocontroller_update_glyphs(self->video);    
         videocontroller_render_glyphs(self->video);
 
         SDL_RenderPresent(self->renderer);
-        ++frame;
+        
+        ++frames;
+        secondsTimer += delta;
+
+        if (secondsTimer >= 1000) {
+            printf("FPS: %d\n", frames);
+            secondsTimer = 0;
+            frames = 0;
+        }
     }
 
     free(input);

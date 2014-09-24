@@ -36,6 +36,7 @@ typedef struct video_controller_t {
     u32 height;
     u32 *data;
     SDL_Texture **glyphs;
+    SDL_Texture *glyphTable[VIDEO_COLOR_COUNT][256];
 
     u32 pxSize;
     int glyphWidth;
@@ -51,6 +52,7 @@ typedef struct video_controller_t {
 VideoController *videocontroller_new(SDL_Renderer *renderer);
 void videocontroller_set_mode(VideoController *self, u32 w, u32 h);
 bool videocontroller_open_font(VideoController *self, const char *filename, u32 px);
+void videocontroller_generate_glyph_table(VideoController *self);
 void videocontroller_poke(VideoController *self, u32 x, u32 y, u32 value);
 void videocontroller_dirty_range(VideoController *self, u32 start, u32 end);
 void videocontroller_update_glyphs(VideoController *self);
