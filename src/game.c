@@ -111,6 +111,8 @@ int game_run(Game *self, int argc, char *argv[]) {
         }
     }
 
+    SDL_WaitThread(self->updateThread, NULL);
+
     free(input);
 
     printf("Done...\n");
@@ -123,7 +125,6 @@ int game_update(void *pself) {
 
     u32 x = 0;
     u32 y = 0;
-    u32 ci = 0;
 
     while (self->run) {
         // memset(input, 0, MAX_INPUT_LENGTH);
@@ -154,7 +155,7 @@ int game_update(void *pself) {
         // vector_free(words);
         // string_free(inputStr);
         
-        u32 v = (ci + 64) + ((rand() % 7 + 1) << 8);
+        u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
         videocontroller_poke(self->video, x, y, v);
        
         ++x;
@@ -166,7 +167,6 @@ int game_update(void *pself) {
                 y = self->video->height - 1;
             }
         }
-        ++ci; if (ci >= 26) { ci = 0; }
 
         videocontroller_update_glyphs(self->video);
 
@@ -221,7 +221,7 @@ void game_proc_events(Game *self) {
                     } else {
                         ++self->updateDelay;
                     }
-                    
+
                     printf("Update Delay: %d\n", self->updateDelay);
                 }
                 break;
