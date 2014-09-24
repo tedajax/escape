@@ -19,7 +19,8 @@ typedef enum video_colors_e {
     VIDEO_COLOR_MAGENTA,
     VIDEO_COLOR_GREY,
     VIDEO_COLOR_WHITE,
-} VideoColors;
+    VIDEO_COLOR_COUNT
+} VideoColor;
 
 extern u32 VIDEO_COLORS[VIDEO_COLOR_COUNT];
 

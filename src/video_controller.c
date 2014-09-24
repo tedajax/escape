@@ -1,6 +1,6 @@
 #include "video_controller.h"
 
-u32 VIDEO_COLORS = {
+u32 VIDEO_COLORS[VIDEO_COLOR_COUNT] = {
     0x000000,
     0xff0000,
     0x00ff00,
@@ -10,7 +10,7 @@ u32 VIDEO_COLORS = {
     0xff00ff,
     0x7f7f7f,
     0xffffff
-}
+};
 
 void videocontroller_set_mode(VideoController *self, u32 w, u32 h) {
     assert(self);
@@ -28,7 +28,7 @@ void videocontroller_set_mode(VideoController *self, u32 w, u32 h) {
     self->dirty = true;
 }
 
-void videocontroller_open_font(VideoController *self, const char *filename, u32 px) {
+bool videocontroller_open_font(VideoController *self, const char *filename, u32 px) {
     assert(self);
 
     TTF_Font *font = TTF_OpenFont(filename, px);
