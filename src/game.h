@@ -2,6 +2,7 @@
 #define _GAME_H_
 
 #include <stdlib.h>
+#include <time.h>
 
 #include "types.h"
 #include "containers.h"
@@ -10,6 +11,7 @@
 #include "world.h"
 #include "parser.h"
 #include "tables.h"
+#include "video_controller.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -24,6 +26,7 @@ typedef struct game_t {
     SDL_Window *window;
     SDL_Renderer *renderer;
     SDL_Surface *screen;
+    VideoController *video;
     bool run;
 } Game;
 
@@ -32,6 +35,7 @@ void game_free(Game *self);
 
 bool game_init(Game *self, int argc, char *argv[]);
 int game_run(Game *self, int argc, char *argv[]);
+void game_proc_events(Game *self);
 void game_do_action(Game *self, Action action);
 void game_do_command(Game *self, Action action);
 

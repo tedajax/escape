@@ -8,6 +8,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #include "types.h"
+#include "containers.h"
 
 typedef enum video_colors_e {
     VIDEO_COLOR_BLACK = 0,
@@ -24,24 +25,36 @@ typedef enum video_colors_e {
 
 extern u32 VIDEO_COLORS[VIDEO_COLOR_COUNT];
 
+typedef struct range_t {
+    u32 start;
+    u32 end;
+} Range;
+
 typedef struct video_controller_t {
     u32 size;
     u32 width;
     u32 height;
     u32 *data;
-    SDL_Texture *glyphs;
-    bool dirty;
+    SDL_Texture **glyphs;
 
     u32 pxSize;
-    u32 glyphWidth;
-    u32 glyphHeight;
+    int glyphWidth;
+    int glyphHeight;
     TTF_Font *font;
+    
+    bool dirty;
+    Vector *dirtyRanges;
+
+    SDL_Renderer *renderer;
 } VideoController;
 
+VideoController *videocontroller_new(SDL_Renderer *renderer);
 void videocontroller_set_mode(VideoController *self, u32 w, u32 h);
 bool videocontroller_open_font(VideoController *self, const char *filename, u32 px);
 void videocontroller_poke(VideoController *self, u32 x, u32 y, u32 value);
+void videocontroller_dirty_range(VideoController *self, u32 start, u32 end);
 void videocontroller_update_glyphs(VideoController *self);
+void videocontroller_update_range(VideoController *self, Range range);
 void videocontroller_render_glyphs(VideoController *self);
 void videocontroller_free(VideoController *self);
 

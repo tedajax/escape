@@ -91,6 +91,18 @@ bool vector_removeAt(Vector *self, u32 index) {
 	return true;
 }
 
+void vector_clear(Vector *self) {
+	assert(self);
+
+	for (u32 i = 0; i < self->size; ++i) {
+		if (self->freeFunc) {
+			self->freeFunc(self->data[i]);
+		}
+	}
+
+	self->size = 0;
+}
+
 void _vector_resize(Vector *self, u32 capacity) {
 	assert(self);
 
@@ -101,3 +113,4 @@ void _vector_resize(Vector *self, u32 capacity) {
 	self->capacity = capacity;
 	self->data = realloc(self->data, sizeof(void *) * capacity);
 }
+

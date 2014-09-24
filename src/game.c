@@ -17,6 +17,8 @@ void game_free(Game *self) {
 }
 
 bool game_init(Game *self, int argc, char *argv[]) {
+    srand(time(NULL));
+
     SET_COLOR(WHITE);
 
     world_load(self->world, "data/test.json");
@@ -60,6 +62,12 @@ bool game_init(Game *self, int argc, char *argv[]) {
         }
     }
 
+    self->video = videocontroller_new(self->renderer);
+    videocontroller_set_mode(self->video, 80, 43);
+    videocontroller_open_font(self->video, "assets/modeseven.ttf", 14);
+    videocontroller_poke(self->video, 0, 0, 0x841);
+    videocontroller_update_glyphs(self->video);
+
     return true;
 }
 
@@ -70,21 +78,13 @@ int game_run(Game *self, int argc, char *argv[]) {
         return 1;
     }
 
-    TTF_Font *font = TTF_OpenFont("assets/modeseven.ttf", 16);
-    if (!font) {
-        printf("TTF_OpenFont: %s\n", TTF_GetError());
-        return 1;
-    }
-
-    SDL_Color color = { 255, 255, 255 };
-    SDL_Surface *textSurface = TTF_RenderText_Solid(font, "THEQUICKBROWNFOXJUMPEDOVERTHELAZYDOGthequickbrownfoxjumpedoverthelazydog01234567", color);
-    SDL_Texture *textTexture = SDL_CreateTextureFromSurface(self->renderer, textSurface);
-
     room_look(self->currentRoom);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
     
+    int frame = 0;
     while (self->run) {
+        game_proc_events(self);
         // memset(input, 0, MAX_INPUT_LENGTH);
 
         // printf("> ");
@@ -116,14 +116,16 @@ int game_run(Game *self, int argc, char *argv[]) {
         SDL_SetRenderDrawColor(self->renderer, 0, 0, 0, 255);
         SDL_RenderClear(self->renderer);
 
-        int width, height;
-        SDL_QueryTexture(textTexture, NULL, NULL, &width, &height);
-        for (int i = 0; i < 42; ++i) {
-            SDL_Rect rect = {0, i * 14 - 2, width, height};
-            SDL_RenderCopy(self->renderer, textTexture, NULL, &rect);
-        }
+        u32 x = rand() % self->video->width;
+                    u32 y = rand() % self->video->height;
+                    u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
+                    videocontroller_poke(self->video, x, y, v);
+            videocontroller_update_glyphs(self->video);    
+        
+        videocontroller_render_glyphs(self->video);
 
         SDL_RenderPresent(self->renderer);
+        ++frame;
     }
 
     free(input);
@@ -131,6 +133,31 @@ int game_run(Game *self, int argc, char *argv[]) {
     printf("Done...\n");
 
     return 0;
+}
+
+void game_proc_events(Game *self) {
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        switch(event.type) {
+            case SDL_QUIT:
+                self->run = false;
+                break;
+
+            case SDL_KEYDOWN:
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    self->run = false;
+                } else if (event.key.keysym.sym == SDLK_p) {
+                    u32 x = rand() % self->video->width;
+                    u32 y = rand() % self->video->height;
+                    u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
+                    videocontroller_poke(self->video, x, y, v);
+                    videocontroller_update_glyphs(self->video);
+                }
+                break;
+
+            default: break;
+        }
+    }
 }
 
 void game_do_action(Game *self, Action action) {
