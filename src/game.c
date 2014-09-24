@@ -118,7 +118,7 @@ int game_run(Game *self, int argc, char *argv[]) {
 
         int width, height;
         SDL_QueryTexture(textTexture, NULL, NULL, &width, &height);
-        for (int i = 0; i < 43; ++i) {
+        for (int i = 0; i < 42; ++i) {
             SDL_Rect rect = {0, i * 14 - 2, width, height};
             SDL_RenderCopy(self->renderer, textTexture, NULL, &rect);
         }
