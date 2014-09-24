@@ -10,16 +10,18 @@
 #include "types.h"
 
 typedef enum video_colors_e {
-    VIDEO_COLOR_BLACK   = 0x000000,
-    VIDEO_COLOR_RED     = 0xff0000,
-    VIDEO_COLOR_GREEN   = 0x00ff00,
-    VIDEO_COLOR_BLUE    = 0x0000ff,
-    VIDEO_COLOR_CYAN    = 0x00ffff,
-    VIDEO_COLOR_YELLOW  = 0xffff00,
-    VIDEO_COLOR_MAGENTA = 0xff00ff,
-    VIDEO_COLOR_GREY    = 0x7f7f7f,
-    VIDEO_COLOR_WHITE   = 0xffffff
+    VIDEO_COLOR_BLACK = 0,
+    VIDEO_COLOR_RED,
+    VIDEO_COLOR_GREEN,
+    VIDEO_COLOR_BLUE,
+    VIDEO_COLOR_CYAN,
+    VIDEO_COLOR_YELLOW,
+    VIDEO_COLOR_MAGENTA,
+    VIDEO_COLOR_GREY,
+    VIDEO_COLOR_WHITE,
 } VideoColors;
+
+extern u32 VIDEO_COLORS[VIDEO_COLOR_COUNT];
 
 typedef struct video_controller_t {
     u32 size;
@@ -33,8 +35,6 @@ typedef struct video_controller_t {
     u32 glyphWidth;
     u32 glyphHeight;
     TTF_Font *font;
-
-    SDL_Color colors[]
 } VideoController;
 
 void videocontroller_set_mode(VideoController *self, u32 w, u32 h);
