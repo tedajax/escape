@@ -65,7 +65,6 @@ bool game_init(Game *self, int argc, char *argv[]) {
     self->video = videocontroller_new(self->renderer);
     videocontroller_set_mode(self->video, 80, 43);
     videocontroller_open_font(self->video, "assets/modeseven.ttf", 14);
-    videocontroller_poke(self->video, 0, 0, 0x841);
     videocontroller_update_glyphs(self->video);
 
     return true;
@@ -84,6 +83,7 @@ int game_run(Game *self, int argc, char *argv[]) {
     
     u32 x = 0;
     u32 y = 0;
+    u32 ci = 0;
 
     u32 lastTickCount = 0;
     u32 secondsTimer = 0;
@@ -124,19 +124,21 @@ int game_run(Game *self, int argc, char *argv[]) {
 
         SDL_SetRenderDrawColor(self->renderer, 0, 0, 0, 255);
         SDL_RenderClear(self->renderer);
-
+        
+        u32 v = (ci + 64) + ((rand() % 7 + 1) << 8);
+        videocontroller_poke(self->video, x, y, v);
+        videocontroller_update_glyphs(self->video);
+        videocontroller_render_glyphs(self->video);
         ++x;
         if (x >= self->video->width) {
             x = 0;
             ++y;
             if (y >= self->video->height) {
-                y = 0;
+                videocontroller_form_feed(self->video);
+                y = self->video->height - 1;
             }
         }
-        u32 v = ((rand() % 26) + 65) + ((rand() % 7 + 1) << 8);
-        videocontroller_poke(self->video, x, y, v);
-        videocontroller_update_glyphs(self->video);    
-        videocontroller_render_glyphs(self->video);
+        ++ci; if (ci >= 26) { ci = 0; }
 
         SDL_RenderPresent(self->renderer);
         
@@ -173,6 +175,9 @@ void game_proc_events(Game *self) {
                     u32 y = rand() % self->video->height;
                     u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
                     videocontroller_poke(self->video, x, y, v);
+                    videocontroller_update_glyphs(self->video);
+                } else if (event.key.keysym.sym == SDLK_RETURN) {
+                    videocontroller_form_feed(self->video);
                     videocontroller_update_glyphs(self->video);
                 }
                 break;
