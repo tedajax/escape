@@ -85,10 +85,11 @@ void videoctl_generate_glyph_table(VideoController *self) {
 
     printf("Generating glyphs...");
 
-    SDL_Surface *textSurface = SDL_CreateRGBSurface(0,
-                                                    256 * self->glyphWidth,
-                                                    VIDEO_COLOR_COUNT * self->glyphHeight,
-                                                    32, 0, 0, 0, 0);
+    SDL_Surface *textSurface = 
+        SDL_CreateRGBSurface(0,
+                             256 * self->glyphWidth,
+                             VIDEO_COLOR_COUNT * self->glyphHeight,
+                             32, 0, 0, 0, 0);
 
     for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
         u32 colorPacked = VIDEO_COLORS[col];
@@ -97,7 +98,12 @@ void videoctl_generate_glyph_table(VideoController *self) {
         u8 b = ((colorPacked & 0x0000FF) >> 0);
         SDL_Color color = { r, g, b };
         SDL_Surface *surface = TTF_RenderText_Solid(self->font, glyphStr, color);
-        SDL_Rect rect = { 0, col * self->glyphHeight, 256 * self->glyphWidth, self->glyphHeight };
+        SDL_Rect rect = {
+            0,
+            col * self->glyphHeight,
+            256 * self->glyphWidth,
+            self->glyphHeight
+        };
         SDL_BlitSurface(surface, NULL, textSurface, &rect);
         SDL_FreeSurface(surface);
     }
@@ -156,6 +162,27 @@ void videoctl_print(VideoController *self, const char *string) {
     while (string[index] != '\0') {
         videoctl_putc(self, string[index++]);
     }
+}
+
+void videoctl_printf(VideoController *self, const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    videoctl_printfv(self, format, args);
+    va_end(args);
+}
+
+void videoctl_printfv(VideoController *self, const char *format, va_list args) {
+    size_t length = strlen(format);
+    length <<= 1;
+
+    char *str = calloc(length, sizeof(char));
+    while (vsnprintf(str, length, format, args) > length) {
+        length <<= 1;
+        str = realloc(str, length);
+    }
+
+    videoctl_print(self, str);
+    free(str);
 }
 
 void videoctl_putc(VideoController *self, char c) {
@@ -245,8 +272,16 @@ void videoctl_render_glyphs(VideoController *self) {
         for (u32 col = 0; col < self->width; ++col) {
             u32 i = row * self->width + col;
 
-            SDL_Rect rect = { col * 10, row * 14 - 2, self->glyphWidth, self->glyphHeight };
-            SDL_RenderCopy(self->renderer, self->glyphTexture, &self->glyphs[i].rect, &rect);
+            SDL_Rect rect = { 
+                col * 10,
+                row * 14 - 2,
+                self->glyphWidth,
+                self->glyphHeight
+            };
+            SDL_RenderCopy(self->renderer,
+                           self->glyphTexture,
+                           &self->glyphs[i].rect,
+                           &rect);
         }
     }
 }

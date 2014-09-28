@@ -154,7 +154,7 @@ int game_update(void *pself) {
         
         //u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
         //videoctl_poke(self->video, x, y, v);
-        videoctl_print(self->video, "ASDF");
+        videoctl_printf(self->video, "ASDF%d%f", 5+10, 3.14f);
 
         videoctl_update_glyphs(self->video);
 

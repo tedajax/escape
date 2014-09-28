@@ -71,6 +71,8 @@ void videoctl_gotoxy(VideoController *self, u16 x, u16 y);
 void videoctl_poke(VideoController *self, u32 x, u32 y, u32 value);
 void videoctl_form_feed(VideoController *self);
 void videoctl_print(VideoController *self, const char *string);
+void videoctl_printf(VideoController *self, const char *format, ...);
+void videoctl_printfv(VideoController *self, const char *format, va_list args);
 void videoctl_putc(VideoController *self, char c);
 void videoctl_step_cursor(VideoController *self);
 void videoctl_set_color(VideoController *self, u32 colorIndex);
