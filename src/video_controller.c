@@ -158,9 +158,30 @@ void videoctl_form_feed(VideoController *self) {
 void videoctl_print(VideoController *self, const char *string) {
     assert(self);
 
+    size_t len = strlen(string);
     u32 index = 0;
     while (string[index] != '\0') {
-        videoctl_putc(self, string[index++]);
+        if (string[index] != '\e') {
+            videoctl_putc(self, string[index++]);
+        } else {
+            u32 start = index + 1;
+            u32 end = start;
+            if (start >= len || string[start] != '[') {
+                ++index;
+                continue;
+            }
+
+            while (string[end] != ']') {
+                ++end;
+                if (end >= len) {
+                    ++index;
+                    continue;
+                }
+            }
+
+            VideoCommand *cmdList = videocmd_parse(string, start + 1, end);
+            videoctl_text_cmds(self, cmdList);
+        }
     }
 }
 
@@ -178,7 +199,7 @@ void videoctl_printfv(VideoController *self, const char *format, va_list args) {
     char *str = calloc(length, sizeof(char));
     while (vsnprintf(str, length, format, args) > length) {
         length <<= 1;
-        str = realloc(str, length);
+        str = realloc(str, length * sizeof(char));
     }
 
     videoctl_print(self, str);
@@ -221,6 +242,9 @@ void videoctl_clear(VideoController *self) {
     videoctl_dirty_range(self, 0, self->size - 1);
     videoctl_gotoxy(self, 0, 0);
 }
+
+void videoctl_text_cmd(VideoController *self, VideoCommand *cmd);
+void videoctl_parse_cmds(VideoController *self, const char *str, u32 start, u32 end);
 
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end) {
     self->dirty = true;
@@ -288,4 +312,60 @@ void videoctl_render_glyphs(VideoController *self) {
 
 void videoctl_free(VideoController *self) {
     //todo
+}
+
+VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
+    if (end - start <= 0 || end - start > 4000000000) {
+        return NULL;
+    }
+
+    VideoCommand *root = calloc(1, sizeof(VideoCommand));
+    char *string = calloc(end - start, sizeof(char));
+    strncpy(string, str, end - start);
+
+    const char *cmdDelim = ";";
+    const u32 cmdLengthLimit = 32;
+    u32 cmdLimit = 16;
+    char **cmdStrs = calloc(cmdLimit, sizeof(char *));
+    u32 cmdCount = 0;
+    char *pCmdStr = strtok(string, cmdDelim);
+    while (pCmdStr) {
+        if (cmdCount >= cmdLimit - 1) {
+            cmdLimit <<= 1;
+            cmdStrs = realloc(cmdStrs, cmdLimit * sizeof(char));
+        }
+        cmdStrs[cmdCount] = calloc(cmdLengthLimit, sizeof(char));
+        strncpy(cmdStrs[cmdCount], pCmdStr, cmdLengthLimit);
+        pCmdStr = strtok(NULL, cmdDelim);
+    }
+
+    free(string);
+
+    if (cmdCount == 0) {
+        free(root);
+        free(cmdStrs)
+        return NULL;
+    }
+
+    VideoCommand *current = root;
+    for (u32 i = 0; i < cmdCount; ++i) {
+        char *cmd = calloc(strlen(cmd))
+        u32 paramCount = 0;
+    }
+}
+
+VideoCommand *videocmd_clear() {
+
+}
+
+VideoCommand *videocmd_change_fg(i32 colorIndex) {
+
+}
+
+VideoCommand *videocmd_change_bg(i32 colorIndex) {
+
+}
+
+VideoCommand *videocmd_gotoxy(i32 x, i32 y) {
+
 }
