@@ -34,10 +34,17 @@ typedef struct glyph_t {
     SDL_Rect rect;
 } Glyph;
 
+typedef struct point_t {
+    u16 x;
+    u16 y;
+} Point;
+
 typedef struct video_controller_t {
     u32 size;
     u32 width;
     u32 height;
+    Point cursor;
+    u32 color;
     u32 *data;
     Glyph *glyphs;
     SDL_Texture *glyphTexture;
@@ -55,16 +62,25 @@ typedef struct video_controller_t {
     SDL_mutex *dataMutex;
 } VideoController;
 
-VideoController *videocontroller_new(SDL_Renderer *renderer);
-void videocontroller_set_mode(VideoController *self, u32 w, u32 h);
-bool videocontroller_open_font(VideoController *self, const char *filename, u32 px);
-void videocontroller_generate_glyph_table(VideoController *self);
-void videocontroller_poke(VideoController *self, u32 x, u32 y, u32 value);
-void videocontroller_form_feed(VideoController *self);
-void videocontroller_dirty_range(VideoController *self, u32 start, u32 end);
-void videocontroller_update_glyphs(VideoController *self);
-void videocontroller_update_range(VideoController *self, Range range);
-void videocontroller_render_glyphs(VideoController *self);
-void videocontroller_free(VideoController *self);
+VideoController *videoctl_new(SDL_Renderer *renderer);
+void videoctl_set_mode(VideoController *self, u32 w, u32 h);
+bool videoctl_open_font(VideoController *self, const char *filename, u32 px);
+void videoctl_generate_glyph_table(VideoController *self);
+
+void videoctl_gotoxy(VideoController *self, u16 x, u16 y);
+void videoctl_poke(VideoController *self, u32 x, u32 y, u32 value);
+void videoctl_form_feed(VideoController *self);
+void videoctl_print(VideoController *self, const char *string);
+void videoctl_putc(VideoController *self, char c);
+void videoctl_step_cursor(VideoController *self);
+void videoctl_set_color(VideoController *self, u32 colorIndex);
+void videoctl_clear(VideoController *self);
+
+void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
+void videoctl_update_glyphs(VideoController *self);
+void videoctl_update_range(VideoController *self, Range range);
+void videoctl_render_glyphs(VideoController *self);
+
+void videoctl_free(VideoController *self);
 
 #endif

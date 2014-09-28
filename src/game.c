@@ -62,10 +62,10 @@ bool game_init(Game *self, int argc, char *argv[]) {
         }
     }
 
-    self->video = videocontroller_new(self->renderer);
-    videocontroller_set_mode(self->video, 80, 43);
-    videocontroller_open_font(self->video, "assets/modeseven.ttf", 14);
-    videocontroller_update_glyphs(self->video);
+    self->video = videoctl_new(self->renderer);
+    videoctl_set_mode(self->video, 80, 43);
+    videoctl_open_font(self->video, "assets/modeseven.ttf", 14);
+    videoctl_update_glyphs(self->video);
 
     self->updateDelay = 100;
 
@@ -123,9 +123,6 @@ int game_run(Game *self, int argc, char *argv[]) {
 int game_update(void *pself) {
     Game *self = (Game *)pself;
 
-    u32 x = 0;
-    u32 y = 0;
-
     while (self->run) {
         // memset(input, 0, MAX_INPUT_LENGTH);
 
@@ -155,20 +152,11 @@ int game_update(void *pself) {
         // vector_free(words);
         // string_free(inputStr);
         
-        u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
-        videocontroller_poke(self->video, x, y, v);
-       
-        ++x;
-        if (x >= self->video->width) {
-            x = 0;
-            ++y;
-            if (y >= self->video->height) {
-                videocontroller_form_feed(self->video);
-                y = self->video->height - 1;
-            }
-        }
+        //u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
+        //videoctl_poke(self->video, x, y, v);
+        videoctl_print(self->video, "ASDF");
 
-        videocontroller_update_glyphs(self->video);
+        videoctl_update_glyphs(self->video);
 
         SDL_Delay(self->updateDelay);
     }
@@ -180,7 +168,7 @@ void game_render(Game *self) {
     SDL_SetRenderDrawColor(self->renderer, 0, 0, 0, 255);
     SDL_RenderClear(self->renderer);
 
-    videocontroller_render_glyphs(self->video);
+    videoctl_render_glyphs(self->video);
 
     SDL_RenderPresent(self->renderer);
 }
@@ -200,11 +188,11 @@ void game_proc_events(Game *self) {
                     u32 x = rand() % self->video->width;
                     u32 y = rand() % self->video->height;
                     u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
-                    videocontroller_poke(self->video, x, y, v);
-                    videocontroller_update_glyphs(self->video);
+                    videoctl_poke(self->video, x, y, v);
+                    videoctl_update_glyphs(self->video);
                 } else if (event.key.keysym.sym == SDLK_RETURN) {
-                    videocontroller_form_feed(self->video);
-                    videocontroller_update_glyphs(self->video);
+                    videoctl_form_feed(self->video);
+                    videoctl_update_glyphs(self->video);
                 } else if (event.key.keysym.sym == SDLK_MINUS) {
                     if (self->updateDelay > 10) {
                         self->updateDelay -= 10;
@@ -223,6 +211,10 @@ void game_proc_events(Game *self) {
                     }
 
                     printf("Update Delay: %d\n", self->updateDelay);
+                } else if (event.key.keysym.sym == SDLK_c) {
+                    videoctl_clear(self->video);
+                } else if (event.key.keysym.sym == SDLK_x) {
+                    videoctl_set_color(self->video, rand() % 7 + 1);
                 }
                 break;
 

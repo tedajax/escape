@@ -12,15 +12,16 @@ u32 VIDEO_COLORS[VIDEO_COLOR_COUNT] = {
     0xffffff
 };
 
-VideoController *videocontroller_new(SDL_Renderer *renderer) {
+VideoController *videoctl_new(SDL_Renderer *renderer) {
     VideoController *self = (VideoController *)calloc(1, sizeof(VideoController));
     self->renderer = renderer;
     self->dirtyRanges = vector_new(8, free);
     self->dataMutex = SDL_CreateMutex();
+    self->color = VIDEO_COLOR_WHITE;
     return self;
 }
 
-void videocontroller_set_mode(VideoController *self, u32 w, u32 h) {
+void videoctl_set_mode(VideoController *self, u32 w, u32 h) {
     assert(self);
 
     self->width = w;
@@ -39,7 +40,7 @@ void videocontroller_set_mode(VideoController *self, u32 w, u32 h) {
     self->dirty = true;
 }
 
-bool videocontroller_open_font(VideoController *self, const char *filename, u32 px) {
+bool videoctl_open_font(VideoController *self, const char *filename, u32 px) {
     assert(self);
 
     TTF_Font *font = TTF_OpenFont(filename, px);
@@ -63,13 +64,13 @@ bool videocontroller_open_font(VideoController *self, const char *filename, u32 
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 
-    videocontroller_generate_glyph_table(self);
-    videocontroller_dirty_range(self, 0, self->size - 1);
+    videoctl_generate_glyph_table(self);
+    videoctl_dirty_range(self, 0, self->size - 1);
 
     return true;
 }
 
-void videocontroller_generate_glyph_table(VideoController *self) {
+void videoctl_generate_glyph_table(VideoController *self) {
     //TODO clear existing glyph table
 
     char *glyphStr = calloc(256, sizeof(char));
@@ -109,7 +110,16 @@ void videocontroller_generate_glyph_table(VideoController *self) {
     free(glyphStr);
 }
 
-void videocontroller_poke(VideoController *self, u32 x, u32 y, u32 value) {
+void videoctl_gotoxy(VideoController *self, u16 x, u16 y) {
+    assert(self);
+    assert(x < self->width);
+    assert(y < self->height);
+
+    self->cursor.x = x;
+    self->cursor.y = y;
+}
+
+void videoctl_poke(VideoController *self, u32 x, u32 y, u32 value) {
     assert(self);
 
     assert(x < self->width);
@@ -117,10 +127,10 @@ void videocontroller_poke(VideoController *self, u32 x, u32 y, u32 value) {
 
     u32 pos = y * self->width + x;
     self->data[pos] = value;
-    videocontroller_dirty_range(self, pos, pos);
+    videoctl_dirty_range(self, pos, pos);
 }
 
-void videocontroller_form_feed(VideoController *self) {
+void videoctl_form_feed(VideoController *self) {
     assert(self);
 
     for (u32 row = 0; row < self->height; ++row) {
@@ -136,10 +146,56 @@ void videocontroller_form_feed(VideoController *self) {
         }
     }
 
-    videocontroller_dirty_range(self, 0, self->size - 1);
+    videoctl_dirty_range(self, 0, self->size - 1);
 }
 
-void videocontroller_dirty_range(VideoController *self, u32 start, u32 end) {
+void videoctl_print(VideoController *self, const char *string) {
+    assert(self);
+
+    u32 index = 0;
+    while (string[index] != '\0') {
+        videoctl_putc(self, string[index++]);
+    }
+}
+
+void videoctl_putc(VideoController *self, char c) {
+    assert(self);
+
+    u32 value = (self->color << 8) + ((u32)c);
+    videoctl_poke(self, self->cursor.x, self->cursor.y, value);
+    videoctl_step_cursor(self);
+}
+
+void videoctl_step_cursor(VideoController *self) {
+    assert(self);
+
+    ++self->cursor.x;
+    if (self->cursor.x >= self->width) {
+        self->cursor.x = 0;
+        ++self->cursor.y;
+        if (self->cursor.y >= self->height) {
+            self->cursor.y = self->height - 1;
+            videoctl_form_feed(self);
+        }
+    }
+}
+
+void videoctl_set_color(VideoController *self, u32 colorIndex) {
+    assert(self);
+    assert(colorIndex < VIDEO_COLOR_COUNT);
+    self->color = colorIndex;
+}
+
+void videoctl_clear(VideoController *self) {
+    assert(self);
+    for (u32 i = 0; i < self->size; ++i) {
+        self->data[i] &= 0xFFFFFF00;
+    }
+    videoctl_dirty_range(self, 0, self->size - 1);
+    videoctl_gotoxy(self, 0, 0);
+}
+
+void videoctl_dirty_range(VideoController *self, u32 start, u32 end) {
     self->dirty = true;
     Range *range = calloc(1, sizeof(Range));
     range->start = start;
@@ -147,20 +203,20 @@ void videocontroller_dirty_range(VideoController *self, u32 start, u32 end) {
     vector_add(self->dirtyRanges, range);
 }
 
-void videocontroller_update_glyphs(VideoController *self) {
+void videoctl_update_glyphs(VideoController *self) {
     if (!self->dirty) { return; }
 
     if (SDL_LockMutex(self->dataMutex) == 0) {
         if (self->dirtyRanges->size > 0) {
             for (u32 i = 0; i < self->dirtyRanges->size; ++i) {
                 Range *r = (Range *)vector_index(self->dirtyRanges, i);
-                videocontroller_update_range(self, *r);
+                videoctl_update_range(self, *r);
             }
 
             vector_clear(self->dirtyRanges);
         } else {
             Range everything = { 0, self->size - 1 };
-            videocontroller_update_range(self, everything);
+            videoctl_update_range(self, everything);
         }
         self->dirty = false;
         SDL_UnlockMutex(self->dataMutex);
@@ -169,7 +225,7 @@ void videocontroller_update_glyphs(VideoController *self) {
     }
 }
 
-void videocontroller_update_range(VideoController *self, Range range) {
+void videoctl_update_range(VideoController *self, Range range) {
     for (u32 i = range.start; i <= range.end; ++i) {
         if (i >= self->size) { break; }
 
@@ -177,14 +233,14 @@ void videocontroller_update_range(VideoController *self, Range range) {
         u32 colorIndex = ((value & 0xF00) >> 8);
         char glyph = (value & 0xFF);
 
-        self->glyphs[i].rect.x = (int)glyph * self->glyphWidth;
+        self->glyphs[i].rect.x = (int)(glyph - 1) * self->glyphWidth;
         self->glyphs[i].rect.y = colorIndex * self->glyphHeight;
         self->glyphs[i].rect.w = self->glyphWidth;
         self->glyphs[i].rect.h = self->glyphHeight;
     }
 }
 
-void videocontroller_render_glyphs(VideoController *self) {
+void videoctl_render_glyphs(VideoController *self) {
     for (u32 row = 0; row < self->height; ++row) {
         for (u32 col = 0; col < self->width; ++col) {
             u32 i = row * self->width + col;
@@ -195,6 +251,6 @@ void videocontroller_render_glyphs(VideoController *self) {
     }
 }
 
-void videocontroller_free(VideoController *self) {
+void videoctl_free(VideoController *self) {
     //todo
 }
