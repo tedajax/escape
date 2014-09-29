@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
 #include "types.h"
@@ -41,6 +42,7 @@ typedef struct range_t {
 
 typedef struct glyph_t {
     SDL_Rect rect;
+    SDL_Rect bgRect;
 } Glyph;
 
 typedef struct point_t {
@@ -63,6 +65,7 @@ typedef struct video_controller_t {
     u32 height;
     Point cursor;
     u32 color;
+    u32 bgColor;
     u32 *data;
     Glyph *glyphs;
     SDL_Texture *glyphTexture;
@@ -94,6 +97,7 @@ void videoctl_printfv(VideoController *self, const char *format, va_list args);
 void videoctl_putc(VideoController *self, char c);
 void videoctl_step_cursor(VideoController *self);
 void videoctl_set_color(VideoController *self, u32 colorIndex);
+void videoctl_set_bgcolor(VideoController *self, u32 colorIndex);
 void videoctl_clear(VideoController *self);
 void videoctl_text_cmds(VideoController *self, VideoCommand *cmdList);
 void videoctl_text_cmd(VideoController *self, VideoCommand cmd);

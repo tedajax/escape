@@ -14,6 +14,7 @@
 #include "video_controller.h"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
 #define SDL_PRINT_ERROR() printf("SDL_Error: %s\n", SDL_GetError())

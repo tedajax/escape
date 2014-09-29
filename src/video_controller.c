@@ -18,6 +18,7 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->dirtyRanges = vector_new(8, free);
     self->dataMutex = SDL_CreateMutex();
     self->color = VIDEO_COLOR_WHITE;
+    self->bgColor = VIDEO_COLOR_GREEN;
     return self;
 }
 
@@ -75,29 +76,33 @@ void videoctl_generate_glyph_table(VideoController *self) {
 
     char *glyphStr = calloc(256, sizeof(char));
     for (int i = 1; i < 256; ++i) {
-        char c = ' ';
-        if (i >= '!' && i <= '~') {
-            c = (char)i;
-        }
+        char c = (char)i;
+        // if (i >= '!' && i <= '~') {
+        //     c = (char)i;
+        // }
         glyphStr[i - 1] = c;
     }
     glyphStr[255] = '\0';
 
     printf("Generating glyphs...");
 
+    u32 textSurfaceW = 256 * self->glyphWidth;
+    u32 textSurfaceH = (VIDEO_COLOR_COUNT + 1) * self->glyphHeight;
     SDL_Surface *textSurface = 
         SDL_CreateRGBSurface(0,
-                             256 * self->glyphWidth,
-                             VIDEO_COLOR_COUNT * self->glyphHeight,
-                             32, 0, 0, 0, 0);
+                             textSurfaceW, textSurfaceH,
+                             32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+    SDL_Rect fullRect = {0, 0, textSurfaceW, textSurfaceH};
+    SDL_FillRect(textSurface, &fullRect, 0x00000000);
+    IMG_SavePNG(textSurface, "a.png");
 
     for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
         u32 colorPacked = VIDEO_COLORS[col];
         u8 r = ((colorPacked & 0xFF0000) >> 16);
         u8 g = ((colorPacked & 0x00FF00) >> 8);
         u8 b = ((colorPacked & 0x0000FF) >> 0);
-        SDL_Color color = { r, g, b };
-        SDL_Surface *surface = TTF_RenderText_Solid(self->font, glyphStr, color);
+        SDL_Color color = { r, g, b, 255 };
+        SDL_Surface *surface = TTF_RenderText_Blended(self->font, glyphStr, color);
         SDL_Rect rect = {
             0,
             col * self->glyphHeight,
@@ -108,7 +113,29 @@ void videoctl_generate_glyph_table(VideoController *self) {
         SDL_FreeSurface(surface);
     }
 
+    for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
+        u32 colorPacked = VIDEO_COLORS[col];
+        u8 r = ((colorPacked & 0xFF0000) >> 16);
+        u8 g = ((colorPacked & 0x00FF00) >> 8);
+        u8 b = ((colorPacked & 0x0000FF) >> 0);
+
+        SDL_Surface *surface = SDL_CreateRGBSurface(0,
+                                                    self->glyphWidth,
+                                                    self->glyphHeight,
+                                                    32, 0, 0, 0, 0);
+        SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, r, g, b));
+        SDL_Rect rect = {
+            col * self->glyphWidth,
+            VIDEO_COLOR_COUNT * self->glyphHeight,
+            self->glyphWidth,
+            self->glyphHeight
+        };
+        SDL_BlitSurface(surface, NULL, textSurface, &rect);
+        SDL_FreeSurface(surface);
+    }
+
     self->glyphTexture = SDL_CreateTextureFromSurface(self->renderer, textSurface);
+    IMG_SavePNG(textSurface, "out.png");
     SDL_FreeSurface(textSurface);
 
     printf("done\n");
@@ -212,7 +239,7 @@ void videoctl_printfv(VideoController *self, const char *format, va_list args) {
 void videoctl_putc(VideoController *self, char c) {
     assert(self);
 
-    u32 value = (self->color << 8) + ((u32)c);
+    u32 value = (self->bgColor << 16) + (self->color << 8) + ((u32)c);
     videoctl_poke(self, self->cursor.x, self->cursor.y, value);
     videoctl_step_cursor(self);
 }
@@ -235,6 +262,12 @@ void videoctl_set_color(VideoController *self, u32 colorIndex) {
     assert(self);
     assert(colorIndex < VIDEO_COLOR_COUNT);
     self->color = colorIndex;
+}
+
+void videoctl_set_bgcolor(VideoController *self, u32 colorIndex) {
+    assert(self);
+    assert(colorIndex < VIDEO_COLOR_COUNT);
+    self->bgColor = colorIndex;
 }
 
 void videoctl_clear(VideoController *self) {
@@ -267,7 +300,7 @@ void videoctl_text_cmd(VideoController *self, VideoCommand cmd) {
             break;
 
         case VIDEO_CMD_CHANGE_BG:
-            // todo
+            videoctl_set_bgcolor(self, cmd.param1);
             break;
 
         case VIDEO_CMD_GOTOXY:
@@ -313,13 +346,19 @@ void videoctl_update_range(VideoController *self, Range range) {
         if (i >= self->size) { break; }
 
         u32 value = self->data[i];
-        u32 colorIndex = ((value & 0xF00) >> 8);
+        u32 colorIndex = ((value & 0xFF00) >> 8);
+        u32 bgColorIndex = ((value & 0xFF0000) >> 16);
         char glyph = (value & 0xFF);
 
         self->glyphs[i].rect.x = (int)(glyph - 1) * self->glyphWidth;
         self->glyphs[i].rect.y = colorIndex * self->glyphHeight;
         self->glyphs[i].rect.w = self->glyphWidth;
         self->glyphs[i].rect.h = self->glyphHeight;
+
+        self->glyphs[i].bgRect.x = bgColorIndex * self->glyphWidth;
+        self->glyphs[i].bgRect.y = (VIDEO_COLOR_COUNT + 1) * self->glyphHeight;
+        self->glyphs[i].bgRect.w = self->glyphWidth;
+        self->glyphs[i].bgRect.h = self->glyphHeight;
     }
 }
 
@@ -329,11 +368,17 @@ void videoctl_render_glyphs(VideoController *self) {
             u32 i = row * self->width + col;
 
             SDL_Rect rect = { 
-                col * 10,
+                col * self->glyphWidth,
                 row * 14 - 2,
                 self->glyphWidth,
                 self->glyphHeight
             };
+
+            SDL_RenderCopy(self->renderer,
+                           self->glyphTexture,
+                           &self->glyphs[i].bgRect,
+                           &rect);
+
             SDL_RenderCopy(self->renderer,
                            self->glyphTexture,
                            &self->glyphs[i].rect,
