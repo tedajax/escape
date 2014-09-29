@@ -94,7 +94,6 @@ void videoctl_generate_glyph_table(VideoController *self) {
                              32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
     SDL_Rect fullRect = {0, 0, textSurfaceW, textSurfaceH};
     SDL_FillRect(textSurface, &fullRect, 0x00000000);
-    IMG_SavePNG(textSurface, "a.png");
 
     for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
         u32 colorPacked = VIDEO_COLORS[col];
@@ -135,7 +134,6 @@ void videoctl_generate_glyph_table(VideoController *self) {
     }
 
     self->glyphTexture = SDL_CreateTextureFromSurface(self->renderer, textSurface);
-    IMG_SavePNG(textSurface, "out.png");
     SDL_FreeSurface(textSurface);
 
     printf("done\n");
@@ -356,7 +354,7 @@ void videoctl_update_range(VideoController *self, Range range) {
         self->glyphs[i].rect.h = self->glyphHeight;
 
         self->glyphs[i].bgRect.x = bgColorIndex * self->glyphWidth;
-        self->glyphs[i].bgRect.y = (VIDEO_COLOR_COUNT + 1) * self->glyphHeight;
+        self->glyphs[i].bgRect.y = VIDEO_COLOR_COUNT * self->glyphHeight;
         self->glyphs[i].bgRect.w = self->glyphWidth;
         self->glyphs[i].bgRect.h = self->glyphHeight;
     }
