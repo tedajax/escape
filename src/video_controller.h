@@ -108,6 +108,7 @@ typedef struct video_controller_t {
     TTF_Font *font;
     bool blinkFlag;
     u32 ticks;
+    u32 blinkDelay;
     
     bool dirty;
     Vector *dirtyRanges;

@@ -19,6 +19,7 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->dataMutex = SDL_CreateMutex();
     self->color = VIDEO_COLOR_WHITE;
     self->bgColor = VIDEO_COLOR_GREEN;
+    self->blinkDelay = 500;
     return self;
 }
 
@@ -234,7 +235,7 @@ void videoctl_printfv(VideoController *self, const char *format, va_list args) {
 void videoctl_putc(VideoController *self, char c) {
     assert(self);
 
-    u32 flags = 0b0000000000001011;
+    u32 flags = 0b0000000000000111;
     u32 value = (flags << 16) + (self->bgColor << 12) + (self->color << 8) + ((u32)c);
     videoctl_poke(self, self->cursor.x, self->cursor.y, value);
     videoctl_step_cursor(self);
@@ -309,8 +310,8 @@ void videoctl_text_cmd(VideoController *self, VideoCommand cmd) {
 
 void videoctl_give_time(VideoController *self, u32 milliseconds) {
     self->ticks += milliseconds;
-    while (self->ticks > 1000) {
-        self->ticks -= 1000;
+    while (self->ticks > self->blinkDelay) {
+        self->ticks -= self->blinkDelay;
         self->blinkFlag = !self->blinkFlag;
         videoctl_dirty_range(self, 0, self->size - 1);
     }
