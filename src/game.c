@@ -154,7 +154,7 @@ int game_update(void *pself) {
         
         //u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
         //videoctl_poke(self->video, x, y, v);
-        //videoctl_printf(self->video, "\e[c,8]Testing \e[c,5]colors \e[c, 2]wow ", 5+10, 3.14f);
+        videoctl_printf(self->video, "\e[c,8]Testing \e[c,5]colors \e[c, 2]wow ", 5+10, 3.14f);
         if (rand() % 100 < 2) {
             videoctl_print(self->video, "\e[clr]");
         }
