@@ -85,7 +85,6 @@ int game_run(Game *self, int argc, char *argv[]) {
         return 1;
     }
 
-    //self->renderThread = SDL_CreateThread(game_render, "render_thread", (void *)self);
     self->updateThread = SDL_CreateThread(game_update, "update_thread", (void *)self);
     if (self->updateThread == NULL) {
         printf("SDL_CreateThread: %s\n", SDL_GetError());
@@ -129,6 +128,9 @@ int game_run(Game *self, int argc, char *argv[]) {
 int game_update(void *pself) {
     Game *self = (Game *)pself;
 
+    u32 ticks = 0;
+    u32 lastTicks = 0;
+
     while (self->run) {
         // memset(input, 0, MAX_INPUT_LENGTH);
 
@@ -160,12 +162,13 @@ int game_update(void *pself) {
         
         //u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
         //videoctl_poke(self->video, x, y, v);
-        videoctl_printf(self->video, "\e[c,8]Testing \e[c,5]colors \e[c, 2]wow ", 5+10, 3.14f);
-        // if (rand() % 100 < 2) {
-        //     videoctl_print(self->video, "\e[clr]");
-        // }
 
+        videoctl_printf(self->video, "\e[c,8;b,1]Testing\e[b,0] \e[c,5;b,2]colors\e[b,0] \e[c,2;b,3]wow\e[b,0] ", 5+10, 3.14f);
         videoctl_update_glyphs(self->video);
+        
+        ticks = SDL_GetTicks();
+        videoctl_give_time(self->video, ticks - lastTicks);
+        lastTicks = ticks;
 
         SDL_Delay(self->updateDelay);
     }

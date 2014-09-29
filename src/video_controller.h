@@ -40,9 +40,41 @@ typedef struct range_t {
     u32 end;
 } Range;
 
+// Glyph Flags - 16 bits
+// FEDC BA98 7654 3210
+//
+// 0 - Show flag, if 1 show the glyph fg
+// 1 - Show background flag, if 1 show the glyph bg
+// 2 - Blink flag, if 1 blink the foreground
+// 3 - Blink BG flag, if 1 blink the background
+// 4 - Bold
+// 5 - Italics
+// 6 - Underline
+// 7-F - Unused at this time
+
+typedef enum glyph_flag_e {
+    GLYPH_SHOW_FG       = 0x1,
+    GLYPH_SHOW_BG       = 0x2,
+    GLYPH_BLINK_FG      = 0x4,
+    GLYPH_BLINK_BG      = 0x8,
+    GLYPH_BOLD          = 0x10,
+    GLYPH_ITALICS       = 0x20,
+    GLYPH_UNDERLINE     = 0x40,
+    GLYPH_UNUSED_7      = 0x80,
+    GLYPH_UNUSED_8      = 0x100,
+    GLYPH_UNUSED_9      = 0x200,
+    GLYPH_UNUSED_A      = 0x400,
+    GLYPH_UNUSED_B      = 0x800,
+    GLYPH_UNUSED_C      = 0x1000,
+    GLYPH_UNUSED_D      = 0x2000,
+    GLYPH_UNUSED_E      = 0x4000,
+    GLYPH_UNUSED_F      = 0x8000,
+} GlyphFlags;
+
 typedef struct glyph_t {
     SDL_Rect rect;
     SDL_Rect bgRect;
+    GlyphFlags flags;
 } Glyph;
 
 typedef struct point_t {
@@ -74,6 +106,8 @@ typedef struct video_controller_t {
     int glyphWidth;
     int glyphHeight;
     TTF_Font *font;
+    bool blinkFlag;
+    u32 ticks;
     
     bool dirty;
     Vector *dirtyRanges;
@@ -101,6 +135,7 @@ void videoctl_set_bgcolor(VideoController *self, u32 colorIndex);
 void videoctl_clear(VideoController *self);
 void videoctl_text_cmds(VideoController *self, VideoCommand *cmdList);
 void videoctl_text_cmd(VideoController *self, VideoCommand cmd);
+void videoctl_give_time(VideoController *self, u32 milliseconds);
 
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
 void videoctl_update_glyphs(VideoController *self);

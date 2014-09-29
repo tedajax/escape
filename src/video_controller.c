@@ -77,9 +77,6 @@ void videoctl_generate_glyph_table(VideoController *self) {
     char *glyphStr = calloc(256, sizeof(char));
     for (int i = 1; i < 256; ++i) {
         char c = (char)i;
-        // if (i >= '!' && i <= '~') {
-        //     c = (char)i;
-        // }
         glyphStr[i - 1] = c;
     }
     glyphStr[255] = '\0';
@@ -237,7 +234,8 @@ void videoctl_printfv(VideoController *self, const char *format, va_list args) {
 void videoctl_putc(VideoController *self, char c) {
     assert(self);
 
-    u32 value = (self->bgColor << 16) + (self->color << 8) + ((u32)c);
+    u32 flags = 0b0000000000001011;
+    u32 value = (flags << 16) + (self->bgColor << 12) + (self->color << 8) + ((u32)c);
     videoctl_poke(self, self->cursor.x, self->cursor.y, value);
     videoctl_step_cursor(self);
 }
@@ -309,6 +307,15 @@ void videoctl_text_cmd(VideoController *self, VideoCommand cmd) {
     }
 }
 
+void videoctl_give_time(VideoController *self, u32 milliseconds) {
+    self->ticks += milliseconds;
+    while (self->ticks > 1000) {
+        self->ticks -= 1000;
+        self->blinkFlag = !self->blinkFlag;
+        videoctl_dirty_range(self, 0, self->size - 1);
+    }
+}
+
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end) {
     self->dirty = true;
     Range *range = calloc(1, sizeof(Range));
@@ -340,13 +347,18 @@ void videoctl_update_glyphs(VideoController *self) {
 }
 
 void videoctl_update_range(VideoController *self, Range range) {
+    i32 transparentX = VIDEO_COLOR_COUNT * self->glyphWidth;
+    i32 transparentY = VIDEO_COLOR_COUNT * self->glyphHeight;
     for (u32 i = range.start; i <= range.end; ++i) {
         if (i >= self->size) { break; }
 
         u32 value = self->data[i];
-        u32 colorIndex = ((value & 0xFF00) >> 8);
-        u32 bgColorIndex = ((value & 0xFF0000) >> 16);
+        u32 colorIndex = ((value & 0xF00) >> 8);
+        u32 bgColorIndex = ((value & 0xF000) >> 12);
+        GlyphFlags flags = ((value & 0xFFFF0000) >> 16);
         char glyph = (value & 0xFF);
+
+        self->glyphs[i].flags = flags;
 
         self->glyphs[i].rect.x = (int)(glyph - 1) * self->glyphWidth;
         self->glyphs[i].rect.y = colorIndex * self->glyphHeight;
@@ -357,6 +369,21 @@ void videoctl_update_range(VideoController *self, Range range) {
         self->glyphs[i].bgRect.y = VIDEO_COLOR_COUNT * self->glyphHeight;
         self->glyphs[i].bgRect.w = self->glyphWidth;
         self->glyphs[i].bgRect.h = self->glyphHeight;
+
+        bool showFG = (flags & GLYPH_SHOW_FG);
+        bool showBG = (flags & GLYPH_SHOW_BG);
+        bool blinkFG = (flags & GLYPH_BLINK_FG);
+        bool blinkBG = (flags & GLYPH_BLINK_BG);
+
+        if (!showFG || (blinkFG && self->blinkFlag)) {
+            self->glyphs[i].rect.x = transparentX;
+            self->glyphs[i].rect.y = transparentY;
+        }
+
+        if (!showBG || (blinkBG && self->blinkFlag)) {
+            self->glyphs[i].bgRect.x = transparentX;
+            self->glyphs[i].bgRect.y = transparentY;
+        }
     }
 }
 
