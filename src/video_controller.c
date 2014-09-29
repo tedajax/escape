@@ -383,7 +383,7 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
     const char *argDelim = ",";
     VideoCommand *current = root;
     for (u32 i = 0; i < cmdCount; ++i) {
-        char *cmd = calloc(strlen(cmd), sizeof(char));
+        char *cmd = calloc(strlen(cmdStrs[i]), sizeof(char));
         strcpy(cmd, cmdStrs[i]);
 
         u32 paramCount = 0;
