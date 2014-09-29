@@ -24,10 +24,12 @@ typedef enum video_colors_e {
 } VideoColor;
 
 typedef enum video_commands_e {
+    VIDEO_CMD_NOOP,
     VIDEO_CMD_CLEAR,
     VIDEO_CMD_CHANGE_FG,
     VIDEO_CMD_CHANGE_BG,
-    VIDEO_CMD_GOTOXY
+    VIDEO_CMD_GOTOXY,
+    VIDEO_CMD_LAST
 } VideoCommands;
 
 extern u32 VIDEO_COLORS[VIDEO_COLOR_COUNT];
@@ -53,7 +55,6 @@ typedef struct video_cmd_t {
     i32 param1;
     i32 param2;
     VideoCommand *next;
-    VideoCommand *previous;
 } VideoCommand;
 
 typedef struct video_controller_t {
@@ -95,6 +96,7 @@ void videoctl_step_cursor(VideoController *self);
 void videoctl_set_color(VideoController *self, u32 colorIndex);
 void videoctl_clear(VideoController *self);
 void videoctl_text_cmds(VideoController *self, VideoCommand *cmdList);
+void videoctl_text_cmd(VideoController *self, VideoCommand cmd);
 
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
 void videoctl_update_glyphs(VideoController *self);
@@ -104,9 +106,7 @@ void videoctl_render_glyphs(VideoController *self);
 void videoctl_free(VideoController *self);
 
 VideoCommand *videocmd_parse(const char *str, u32 start, u32 end);
-VideoCommand *videocmd_clear();
-VideoCommand *videocmd_change_fg(i32 colorIndex);
-VideoCommand *videocmd_change_bg(i32 colorIndex);
-VideoCommand *videocmd_gotoxy(i32 x, i32 y);
+VideoCommand *videocmd_create(u32 argc, char **argv);
+void videocmd_free(VideoCommand *self);
 
 #endif
