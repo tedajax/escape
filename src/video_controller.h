@@ -30,6 +30,8 @@ typedef enum video_commands_e {
     VIDEO_CMD_CHANGE_FG,
     VIDEO_CMD_CHANGE_BG,
     VIDEO_CMD_GOTOXY,
+    VIDEO_CMD_BLINK_FG,
+    VIDEO_CMD_BLINK_BG,
     VIDEO_CMD_LAST
 } VideoCommands;
 
@@ -88,19 +90,31 @@ typedef struct video_cmd_t {
     VideoCommands command;
     i32 param1;
     i32 param2;
+    bool hasParam1;
+    bool hasParam2;
     VideoCommand *next;
 } VideoCommand;
+
+typedef struct video_text_state_t {
+    u32 color;
+    u32 bgColor;
+    bool blink;
+    bool bgBlink;
+    bool bold;
+    bool italics;
+    bool underline;
+} VideoTextState;
 
 typedef struct video_controller_t {
     u32 size;
     u32 width;
     u32 height;
     Point cursor;
-    u32 color;
-    u32 bgColor;
     u32 *data;
     Glyph *glyphs;
     SDL_Texture *glyphTexture;
+
+    VideoTextState textState;
 
     u32 pxSize;
     int glyphWidth;
@@ -123,6 +137,8 @@ void videoctl_set_mode(VideoController *self, u32 w, u32 h);
 bool videoctl_open_font(VideoController *self, const char *filename, u32 px);
 void videoctl_generate_glyph_table(VideoController *self);
 
+GlyphFlags videoctl_get_glyph_flags(VideoController *self);
+
 void videoctl_gotoxy(VideoController *self, u16 x, u16 y);
 void videoctl_poke(VideoController *self, u32 x, u32 y, u32 value);
 void videoctl_form_feed(VideoController *self);
@@ -143,10 +159,21 @@ void videoctl_update_glyphs(VideoController *self);
 void videoctl_update_range(VideoController *self, Range range);
 void videoctl_render_glyphs(VideoController *self);
 
+u32 _videoctl_gen_data(VideoController *self, char c);
+
 void videoctl_free(VideoController *self);
 
 VideoCommand *videocmd_parse(const char *str, u32 start, u32 end);
 VideoCommand *videocmd_create(u32 argc, char **argv);
+bool videocmd_bool(VideoCommand cmd, bool current);
+
+struct param_parse_t {
+    bool hasValue;
+    i32 value;
+};
+
+VideoCommands _videocmd_parse_command(const char *cmd);
+struct param_parse_t _videocmd_parse_param(const char *param);
 void videocmd_free(VideoCommand *self);
 
 #endif

@@ -17,8 +17,8 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->renderer = renderer;
     self->dirtyRanges = vector_new(8, free);
     self->dataMutex = SDL_CreateMutex();
-    self->color = VIDEO_COLOR_WHITE;
-    self->bgColor = VIDEO_COLOR_GREEN;
+    self->textState.color = VIDEO_COLOR_WHITE;
+    self->textState.bgColor = VIDEO_COLOR_GREEN;
     self->blinkDelay = 500;
     return self;
 }
@@ -235,8 +235,7 @@ void videoctl_printfv(VideoController *self, const char *format, va_list args) {
 void videoctl_putc(VideoController *self, char c) {
     assert(self);
 
-    u32 flags = 0b0000000000000111;
-    u32 value = (flags << 16) + (self->bgColor << 12) + (self->color << 8) + ((u32)c);
+    u32 value = _videoctl_gen_data(self, c);
     videoctl_poke(self, self->cursor.x, self->cursor.y, value);
     videoctl_step_cursor(self);
 }
@@ -258,13 +257,13 @@ void videoctl_step_cursor(VideoController *self) {
 void videoctl_set_color(VideoController *self, u32 colorIndex) {
     assert(self);
     assert(colorIndex < VIDEO_COLOR_COUNT);
-    self->color = colorIndex;
+    self->textState.color = colorIndex;
 }
 
 void videoctl_set_bgcolor(VideoController *self, u32 colorIndex) {
     assert(self);
     assert(colorIndex < VIDEO_COLOR_COUNT);
-    self->bgColor = colorIndex;
+    self->textState.bgColor = colorIndex;
 }
 
 void videoctl_clear(VideoController *self) {
@@ -303,6 +302,14 @@ void videoctl_text_cmd(VideoController *self, VideoCommand cmd) {
         case VIDEO_CMD_GOTOXY:
             videoctl_gotoxy(self, cmd.param1, cmd.param2);
             break;
+
+        case VIDEO_CMD_BLINK_FG:
+            self->textState.blink = videocmd_bool(cmd, self->textState.blink);
+            break;
+
+        case VIDEO_CMD_BLINK_BG:
+            self->textState.bgBlink = videocmd_bool(cmd, self->textState.bgBlink);
+            break;            
 
         default: break;
     }
@@ -413,6 +420,15 @@ void videoctl_render_glyphs(VideoController *self) {
     }
 }
 
+u32 _videoctl_gen_data(VideoController *self, char c) {
+    u32 flags = 0b0000000000000111;
+    u32 value = (flags << 16);
+    value +=    (self->textState.bgColor << 12);
+    value +=    (self->textState.color << 8);
+    value +=    (u32)c;
+    return value;
+}
+
 void videoctl_free(VideoController *self) {
     //todo
 }
@@ -501,18 +517,8 @@ VideoCommand *videocmd_create(u32 argc, char **argv) {
         return NULL;
     }
 
-    char *cmd = argv[0];
-    VideoCommands command = VIDEO_CMD_NOOP;
-
-    if (strcmp(cmd, "clr") == 0) {
-        command = VIDEO_CMD_CLEAR;
-    } else if (strcmp(cmd, "c") == 0) {
-        command = VIDEO_CMD_CHANGE_FG;
-    } else if (strcmp(cmd, "b") == 0) {
-        command = VIDEO_CMD_CHANGE_BG;
-    } else if (strcmp(cmd, "goto") == 0) {
-        command = VIDEO_CMD_GOTOXY;
-    } else {
+    VideoCommands command = _videocmd_parse_command(argv[0]);
+    if (command == VIDEO_CMD_NOOP) {
         return NULL;
     }
 
@@ -529,19 +535,68 @@ VideoCommand *videocmd_create(u32 argc, char **argv) {
         param1Str = argv[1];
     }
 
-    i32 param1 = 0;
-    i32 param2 = 0;
+    struct param_parse_t parse1 = _videocmd_parse_param(param1Str);
+    struct param_parse_t parse2 = _videocmd_parse_param(param2Str);
 
-    if (param1Str) {
-        param1 = atoi(param1Str);
+    result->hasParam1 = parse1.hasValue;
+    result->hasParam2 = parse2.hasValue;
+    result->param1 = parse1.value;
+    result->param2 = parse2.value;
+
+    return result;
+}
+
+VideoCommands _videocmd_parse_command(const char *cmd) {
+    VideoCommands command = VIDEO_CMD_NOOP;
+
+    if (strcmp(cmd, "clr") == 0) {
+        command = VIDEO_CMD_CLEAR;
+    } else if (strcmp(cmd, "c") == 0) {
+        command = VIDEO_CMD_CHANGE_FG;
+    } else if (strcmp(cmd, "b") == 0) {
+        command = VIDEO_CMD_CHANGE_BG;
+    } else if (strcmp(cmd, "goto") == 0) {
+        command = VIDEO_CMD_GOTOXY;
+    } else if (strcmp(cmd, "blink") == 0) {
+        command = VIDEO_CMD_BLINK_FG;
+    } else if (strcmp(cmd, "blinkbg") == 0) {
+        command = VIDEO_CMD_BLINK_BG;
     }
 
-    if (param2Str) {
-        param2 = atoi(param2Str);
+    return command;
+}
+
+bool videocmd_bool(VideoCommand cmd, bool current) {
+    if (cmd.hasParam1) {
+        if (cmd.param1 > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return !current;
+    }
+}
+
+struct param_parse_t _videocmd_parse_param(const char *param) {
+    struct param_parse_t result = { false, 0 };
+
+    if (!param) {
+        return result;
     }
 
-    result->param1 = param1;
-    result->param2 = param2;
+    result.hasValue = true;
+    i32 value = 0;
+    if (strcmp(param, "on") == 0 || strcmp(param, "true")) {
+        value = 1;
+    } else if (strcmp(param, "off") == 0 || strcmp(param, "false")) {
+        value = 0;
+    } else if (strcmp(param, "toggle") == 0) {
+        value = -1;
+    } else {
+        value = atoi(param);
+    }
+    result.value = value;
 
     return result;
 }
