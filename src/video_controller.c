@@ -421,11 +421,11 @@ void videoctl_render_glyphs(VideoController *self) {
 }
 
 u32 _videoctl_gen_data(VideoController *self, char c) {
-    u32 flags = 0b0000000000000111;
-    u32 value = (flags << 16);
-    value +=    (self->textState.bgColor << 12);
-    value +=    (self->textState.color << 8);
-    value +=    (u32)c;
+    u32 flags =  0b0000000000000111;
+    u32 value =  (flags << 16);
+    value     += (self->textState.bgColor << 12);
+    value     += (self->textState.color << 8);
+    value     += (u32)c;
     return value;
 }
 
@@ -587,9 +587,9 @@ struct param_parse_t _videocmd_parse_param(const char *param) {
 
     result.hasValue = true;
     i32 value = 0;
-    if (strcmp(param, "on") == 0 || strcmp(param, "true")) {
+    if (strcmp(param, "on") == 0 || strcmp(param, "true") == 0) {
         value = 1;
-    } else if (strcmp(param, "off") == 0 || strcmp(param, "false")) {
+    } else if (strcmp(param, "off") == 0 || strcmp(param, "false") == 0) {
         value = 0;
     } else if (strcmp(param, "toggle") == 0) {
         value = -1;
