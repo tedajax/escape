@@ -70,7 +70,7 @@ bool game_init(Game *self, int argc, char *argv[]) {
 
     self->video = videoctl_new(self->renderer);
     videoctl_set_mode(self->video, 100, 43);
-    videoctl_open_font(self->video, "assets/terminus.ttf", 14);
+    videoctl_open_font(self->video, "assets/dejavumono.ttf", 14);
     videoctl_update_glyphs(self->video);
 
     self->updateDelay = 100;
@@ -163,7 +163,7 @@ int game_update(void *pself) {
         //u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
         //videoctl_poke(self->video, x, y, v);
 
-        videoctl_printf(self->video, "\e[c,8;b,1]Testing\e[b,0] \e[c,5;b,2]colors\e[b,0] \e[c,2;b,3]wow\e[b,0] ", 5+10, 3.14f);
+        videoctl_printf(self->video, "\e[c,8]Testing \e[c,5]colors \e[c,2]wow ", 5+10, 3.14f);
         videoctl_update_glyphs(self->video);
         
         ticks = SDL_GetTicks();

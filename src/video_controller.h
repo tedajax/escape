@@ -52,7 +52,8 @@ typedef struct range_t {
 // 4 - Bold
 // 5 - Italics
 // 6 - Underline
-// 7-F - Unused at this time
+// 7 - Strikethrough
+// 8-F - Unused at this time
 
 typedef enum glyph_flag_e {
     GLYPH_SHOW_FG       = 0x1,
@@ -62,7 +63,7 @@ typedef enum glyph_flag_e {
     GLYPH_BOLD          = 0x10,
     GLYPH_ITALICS       = 0x20,
     GLYPH_UNDERLINE     = 0x40,
-    GLYPH_UNUSED_7      = 0x80,
+    GLYPH_STRIKETHROUGH = 0x80,
     GLYPH_UNUSED_8      = 0x100,
     GLYPH_UNUSED_9      = 0x200,
     GLYPH_UNUSED_A      = 0x400,
@@ -77,6 +78,8 @@ typedef struct glyph_t {
     SDL_Rect rect;
     SDL_Rect bgRect;
     GlyphFlags flags;
+    SDL_Color color;
+    SDL_Color bgColor;
 } Glyph;
 
 typedef struct point_t {
@@ -103,6 +106,7 @@ typedef struct video_text_state_t {
     bool bold;
     bool italics;
     bool underline;
+    bool strikethrough;
 } VideoTextState;
 
 typedef struct video_controller_t {
@@ -160,6 +164,8 @@ void videoctl_update_range(VideoController *self, Range range);
 void videoctl_render_glyphs(VideoController *self);
 
 u32 _videoctl_gen_data(VideoController *self, char c);
+u32 _videoctl_gen_flags(VideoController *self);
+SDL_Color _videoctl_get_color(VideoController *self, u32 colorIndex);
 
 void videoctl_free(VideoController *self);
 

@@ -18,7 +18,7 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->dirtyRanges = vector_new(8, free);
     self->dataMutex = SDL_CreateMutex();
     self->textState.color = VIDEO_COLOR_WHITE;
-    self->textState.bgColor = VIDEO_COLOR_GREEN;
+    self->textState.bgColor = VIDEO_COLOR_BLACK;
     self->blinkDelay = 500;
     return self;
 }
@@ -84,31 +84,47 @@ void videoctl_generate_glyph_table(VideoController *self) {
 
     printf("Generating glyphs...");
 
+    const u32 MAX_STYLES = 16;
     u32 textSurfaceW = 256 * self->glyphWidth;
-    u32 textSurfaceH = (VIDEO_COLOR_COUNT + 1) * self->glyphHeight;
+    u32 textSurfaceH = (MAX_STYLES + 1) * self->glyphHeight;
     SDL_Surface *textSurface = 
         SDL_CreateRGBSurface(0,
                              textSurfaceW, textSurfaceH,
-                             32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+                             32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0);
     SDL_Rect fullRect = {0, 0, textSurfaceW, textSurfaceH};
     SDL_FillRect(textSurface, &fullRect, 0x00000000);
 
-    for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
-        u32 colorPacked = VIDEO_COLORS[col];
-        u8 r = ((colorPacked & 0xFF0000) >> 16);
-        u8 g = ((colorPacked & 0x00FF00) >> 8);
-        u8 b = ((colorPacked & 0x0000FF) >> 0);
-        SDL_Color color = { r, g, b, 255 };
-        SDL_Surface *surface = TTF_RenderText_Blended(self->font, glyphStr, color);
+    // for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
+    //     u32 colorPacked = VIDEO_COLORS[col];
+    //     u8 r = ((colorPacked & 0xFF0000) >> 16);
+    //     u8 g = ((colorPacked & 0x00FF00) >> 8);
+    //     u8 b = ((colorPacked & 0x0000FF) >> 0);
+    //     SDL_Color color = { r, g, b, 255 };
+    //     SDL_Surface *surface = TTF_RenderText_Blended(self->font, glyphStr, color);
+    //     SDL_Rect rect = {
+    //         0,
+    //         col * self->glyphHeight,
+    //         256 * self->glyphWidth,
+    //         self->glyphHeight
+    //     };
+    //     SDL_BlitSurface(surface, NULL, textSurface, &rect);
+    //     SDL_FreeSurface(surface);
+    // }
+
+    SDL_Color white = { 255, 255, 255, 255 };
+    for (u32 style = 0; style < MAX_STYLES; ++style) {
+        TTF_SetFontStyle(self->font, style);
+        SDL_Surface *surface = TTF_RenderText_Blended(self->font, glyphStr, white);
         SDL_Rect rect = {
             0,
-            col * self->glyphHeight,
+            style * self->glyphHeight,
             256 * self->glyphWidth,
             self->glyphHeight
         };
         SDL_BlitSurface(surface, NULL, textSurface, &rect);
         SDL_FreeSurface(surface);
     }
+    IMG_SavePNG(textSurface, "out.png");
 
     for (u32 col = 0; col < VIDEO_COLOR_COUNT; ++col) {
         u32 colorPacked = VIDEO_COLORS[col];
@@ -269,7 +285,7 @@ void videoctl_set_bgcolor(VideoController *self, u32 colorIndex) {
 void videoctl_clear(VideoController *self) {
     assert(self);
     for (u32 i = 0; i < self->size; ++i) {
-        self->data[i] &= 0xFFFFFF00;
+        self->data[i] &= 0xFFFF0000;
     }
     videoctl_dirty_range(self, 0, self->size - 1);
     videoctl_gotoxy(self, 0, 0);
@@ -369,7 +385,7 @@ void videoctl_update_range(VideoController *self, Range range) {
         self->glyphs[i].flags = flags;
 
         self->glyphs[i].rect.x = (int)(glyph - 1) * self->glyphWidth;
-        self->glyphs[i].rect.y = colorIndex * self->glyphHeight;
+        self->glyphs[i].rect.y = 2 * self->glyphHeight;
         self->glyphs[i].rect.w = self->glyphWidth;
         self->glyphs[i].rect.h = self->glyphHeight;
 
@@ -377,6 +393,9 @@ void videoctl_update_range(VideoController *self, Range range) {
         self->glyphs[i].bgRect.y = VIDEO_COLOR_COUNT * self->glyphHeight;
         self->glyphs[i].bgRect.w = self->glyphWidth;
         self->glyphs[i].bgRect.h = self->glyphHeight;
+
+        self->glyphs[i].color = _videoctl_get_color(self, colorIndex);
+        self->glyphs[i].bgColor = _videoctl_get_color(self, bgColorIndex);
 
         bool showFG = (flags & GLYPH_SHOW_FG);
         bool showBG = (flags & GLYPH_SHOW_BG);
@@ -407,10 +426,20 @@ void videoctl_render_glyphs(VideoController *self) {
                 self->glyphHeight
             };
 
+            SDL_SetTextureColorMod(self->glyphTexture,
+                                   self->glyphs[i].bgColor.r,
+                                   self->glyphs[i].bgColor.g,
+                                   self->glyphs[i].bgColor.b);
+
             SDL_RenderCopy(self->renderer,
                            self->glyphTexture,
                            &self->glyphs[i].bgRect,
                            &rect);
+
+            SDL_SetTextureColorMod(self->glyphTexture,
+                                   self->glyphs[i].color.r,
+                                   self->glyphs[i].color.g,
+                                   self->glyphs[i].color.b);
 
             SDL_RenderCopy(self->renderer,
                            self->glyphTexture,
@@ -421,12 +450,41 @@ void videoctl_render_glyphs(VideoController *self) {
 }
 
 u32 _videoctl_gen_data(VideoController *self, char c) {
-    u32 flags =  0b0000000000000111;
-    u32 value =  (flags << 16);
+    u32 value =  (_videoctl_gen_flags(self) << 16);
     value     += (self->textState.bgColor << 12);
     value     += (self->textState.color << 8);
     value     += (u32)c;
     return value;
+}
+
+u32 _videoctl_gen_flags(VideoController *self) {
+    u32 result = 0;
+
+    result += (1 << 0);
+    result += (1 << 1);
+    result += (self->textState.blink << 2);
+    result += (self->textState.bgBlink << 3);
+    result += (self->textState.bold << 4);
+    result += (self->textState.italics << 5);
+    result += (self->textState.underline << 6);
+    result += (self->textState.strikethrough << 7);
+
+    return result;
+}
+
+SDL_Color _videoctl_get_color(VideoController *self, u32 colorIndex) {
+    assert(self);
+    assert(colorIndex < VIDEO_COLOR_COUNT);
+
+    u32 colorPacked = VIDEO_COLORS[colorIndex];
+
+    SDL_Color result = {
+        ((colorPacked & 0xFF0000) >> 8),
+        ((colorPacked & 0x00FF00) >> 4),
+        ((colorPacked & 0x0000FF)),
+        255
+    };
+    return result;
 }
 
 void videoctl_free(VideoController *self) {
