@@ -18,7 +18,7 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->dirtyRanges = vector_new(8, free);
     self->dataMutex = SDL_CreateMutex();
     self->textState.color = VIDEO_COLOR_WHITE;
-    self->textState.bgColor = VIDEO_COLOR_GREEN;
+    self->textState.bgColor = VIDEO_COLOR_BLACK;
     self->blinkDelay = 500;
     return self;
 }
@@ -178,35 +178,92 @@ void videoctl_form_feed(VideoController *self) {
     videoctl_dirty_range(self, 0, self->size - 1);
 }
 
+void videoctl_carriage_return(VideoController *self) {
+    self->cursor.x = 0;
+}
+
+void videoctl_new_line(VideoController *self) {
+    self->cursor.x = 0;
+    ++self->cursor.y;
+    if (self->cursor.y >= self->height) {
+        self->cursor.y = self->height - 1;
+        videoctl_form_feed(self);
+    }
+}
+
+void videoctl_backspace(VideoController *self) {
+    if (self->cursor.x > 0) {
+        --self->cursor.x;
+    } else {
+        if (self->cursor.y > 0) {
+            --self->cursor.y;
+            self->cursor.x = self->width - 1;
+        }
+    }
+
+    u32 value = _videoctl_gen_data(self, 0);
+    videoctl_poke(self, self->cursor.x, self->cursor.y, value);
+}
+
+void videoctl_tab(VideoController *self) {
+    videoctl_step_cursorc(self, 4);
+}
+
 void videoctl_print(VideoController *self, const char *string) {
     assert(self);
 
     size_t len = strlen(string);
     u32 index = 0;
+    u32 start;
+    u32 end;
+    VideoCommand *cmdList = NULL;
     while (string[index] != '\0') {
-        if (string[index] != '\e') {
-            videoctl_putc(self, string[index++]);
-        } else {
-            u32 start = index + 1;
-            u32 end = start;
-            if (start >= len || string[start] != '[') {
+        switch (string[index]) {
+            case '\b':
+                videoctl_backspace(self);
                 ++index;
-                continue;
-            }
+                break;
 
-            while (string[end] != ']') {
-                ++end;
-                if (end >= len) {
+            case '\t':
+                videoctl_tab(self);
+                ++index;
+                break;
+
+            case '\r':
+                videoctl_carriage_return(self);
+                ++index;
+                break;
+
+            case '\n':
+                videoctl_new_line(self);
+                ++index;
+                break;
+
+            case '\e':
+                start = index + 1;
+                end = start;
+                if (start >= len || string[start] != '[') {
                     ++index;
                     continue;
                 }
-            }
 
-            VideoCommand *cmdList = videocmd_parse(string, start + 1, end);
-            videoctl_text_cmds(self, cmdList);
-            videocmd_free(cmdList);
+                while (string[end] != ']') {
+                    ++end;
+                    if (end >= len) {
+                        ++index;
+                        continue;
+                    }
+                }
 
-            index = end + 1;
+                cmdList = videocmd_parse(string, start + 1, end);
+                videoctl_text_cmds(self, cmdList);
+                videocmd_free(cmdList);
+
+                index = end + 1;
+                break;
+
+            default:
+                videoctl_putc(self, string[index++]);
         }
     }
 }
@@ -219,10 +276,11 @@ void videoctl_printf(VideoController *self, const char *format, ...) {
 }
 
 void videoctl_printfv(VideoController *self, const char *format, va_list args) {
-    size_t length = strlen(format);
-    length <<= 1;
+    size_t length = 64;
 
     char *str = calloc(length, sizeof(char));
+
+    //there's a bug in here somewhere
     while (vsnprintf(str, length, format, args) > length) {
         length <<= 1;
         str = realloc(str, length * sizeof(char));
@@ -251,6 +309,12 @@ void videoctl_step_cursor(VideoController *self) {
             self->cursor.y = self->height - 1;
             videoctl_form_feed(self);
         }
+    }
+}
+
+void videoctl_step_cursorc(VideoController *self, u32 c) {
+    for (u32 i = 0; i < c; ++i) {
+        videoctl_step_cursor(self);
     }
 }
 
@@ -421,10 +485,9 @@ void videoctl_render_glyphs(VideoController *self) {
 }
 
 u32 _videoctl_gen_data(VideoController *self, char c) {
-    u32 flags =  0b0000000000000111;
+    u32 flags =  0b0000000000000011;
     u32 value =  (flags << 16);
     value     += (self->textState.bgColor << 12);
-    printf("%d\n", self->textState.color);
     value     += (self->textState.color << 8);
     value     += (u32)c;
     return value;

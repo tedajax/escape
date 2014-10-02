@@ -106,6 +106,7 @@ int game_run(Game *self, int argc, char *argv[]) {
         u32 delta = ticks - lastTickCount;
         lastTickCount = ticks;
 
+        videoctl_update_glyphs(self->video);
         game_render(self);
 
         ++frames;
