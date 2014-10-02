@@ -424,6 +424,7 @@ u32 _videoctl_gen_data(VideoController *self, char c) {
     u32 flags =  0b0000000000000111;
     u32 value =  (flags << 16);
     value     += (self->textState.bgColor << 12);
+    printf("%d\n", self->textState.color);
     value     += (self->textState.color << 8);
     value     += (u32)c;
     return value;

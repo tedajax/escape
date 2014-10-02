@@ -31,22 +31,22 @@ Room *room_set(Room *self, JsonToken *data) {
 void room_look(Room *self) {
     assert(self);
 
-    printf("%s:\n", self->name->characters);
-    printf("%s", self->description->characters);
+    game_printf("%s:\n", self->name->characters);
+    game_printf("%s", self->description->characters);
 
     i32 exitCount = room_exit_count(self);
     if (exitCount == 0) {
-        printf("  There are no exits... what have you done?");
+        game_printf("  There are no exits... what have you done?");
     } else if (exitCount == 1) {
-        printf("  There is one exit to the %s%s%s.", COLORS[RED], room_get_exit_name(self), COLORS[WHITE]);
+        game_printf("  There is one exit to the %s%s%s.", COLORS[RED], room_get_exit_name(self), COLORS[WHITE]);
     } else {
         char *directions = calloc(64, sizeof(char));
         room_get_exit_names(self, directions);
-        printf("  Exits are %s", directions);
+        game_printf("  Exits are %s", directions);
         free(directions);
     }
 
-    printf("\n");
+    game_printf("\n");
 }
 
 i32 room_exit_count(Room *self) {

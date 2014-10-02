@@ -5,6 +5,7 @@
 #include "containers.h"
 #include "json.h"
 #include "term.h"
+#include "globals.h"
 
 typedef enum room_exit_e {
     EXIT_EAST = 0,

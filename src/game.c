@@ -1,6 +1,7 @@
 #include "game.h"
 
 const size_t MAX_INPUT_LENGTH = 64;
+VideoController *g_video = NULL;
 
 Game *game_new() {
     Game *self = calloc(1, sizeof(Game));
@@ -72,6 +73,7 @@ bool game_init(Game *self, int argc, char *argv[]) {
     videoctl_set_mode(self->video, 100, 43);
     videoctl_open_font(self->video, "assets/terminus.ttf", 14);
     videoctl_update_glyphs(self->video);
+    g_video = self->video;
 
     self->updateDelay = 100;
 
@@ -163,14 +165,14 @@ int game_update(void *pself) {
         //u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
         //videoctl_poke(self->video, x, y, v);
 
-        videoctl_printf(self->video, "\e[c,8;b,1]Testing\e[b,0] \e[c,5;b,2]colors\e[b,0] \e[c,2;b,3]wow\e[b,0] ", 5+10, 3.14f);
-        videoctl_update_glyphs(self->video);
+        // videoctl_printf(self->video, "\e[c,8;b,1]Testing\e[b,0] \e[c,5;b,2]colors\e[b,0] \e[c,2;b,3]wow\e[b,0] ", 5+10, 3.14f);
+        // videoctl_update_glyphs(self->video);
         
         ticks = SDL_GetTicks();
         videoctl_give_time(self->video, ticks - lastTicks);
         lastTicks = ticks;
 
-        SDL_Delay(self->updateDelay);
+        //SDL_Delay(self->updateDelay);
     }
 
     return 1;
@@ -339,4 +341,11 @@ void game_do_command(Game *self, Action action) {
             }
             break;
     }
+}
+
+void game_printf(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    videoctl_printfv(g_video, format, args);
+    va_end(args);
 }
