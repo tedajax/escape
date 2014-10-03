@@ -1,6 +1,6 @@
 #include "input.h"
 
-char SHIFTED_CHARS[256] = {
+char SHIFTED_CHARS[128] = {
         0,     0,     0,     0,     0,     0,     0,     0, // 0x00 - 0x07
         0,     0,     0,     0,     0,     0,     0,     0, // 0x08 - 0x0F
         0,     0,     0,     0,     0,     0,     0,     0, // 0x10 - 0x17
@@ -26,32 +26,78 @@ char input_get_event_char(SDL_Event event) {
     }
 
     SDL_Keycode symbol = event.key.keysym.sym;
-    SDL_Keymode mod = event.key.keysym.mod;
+    SDL_Keymod mod = event.key.keysym.mod;
     
     if (symbol == SDLK_UNKNOWN) {
         return 0;
     }
 
     if ((symbol & 0x40000000) > 0) {
-        return 0;
+        printf("%d\n", symbol);
+        char special = input_get_special_char(symbol);
+        return special;
+    }
+
+    if (symbol == SDLK_RETURN) {
+        return '\n';
     }
 
     bool shift = (mod & KMOD_SHIFT) > 0;
     bool caps = (mod & KMOD_CAPS) > 0;
 
-    return 0;
+    char result = 0;
+    if (shift && !caps) {
+        result = input_get_shifted_char(symbol);
+    } else if (!shift && caps) {
+        result = input_get_caps_char(symbol);
+    } else if (shift && caps) {
+        result = input_get_shifted_caps_char(symbol);
+    } else {
+        result = symbol;
+    }
+
+    return result;
 }
 
-unsigned char input_shifted_char(unsigned char c) {
-    if (c > 127) { return c; }
-
-    if (c >= 'a' && c <= 'z') {
-        return c - 0x20;
+char input_get_special_char(SDL_Keycode keycode) {
+    switch(keycode) {
+        case SDLK_KP_0: return '0';
+        case SDLK_KP_1: return '1';
+        case SDLK_KP_2: return '2';
+        case SDLK_KP_3: return '3';
+        case SDLK_KP_4: return '4';
+        case SDLK_KP_5: return '5';
+        case SDLK_KP_6: return '6';
+        case SDLK_KP_7: return '7';
+        case SDLK_KP_8: return '8';
+        case SDLK_KP_9: return '9';
+        case SDLK_KP_PERIOD: return '.';
+        case SDLK_KP_DIVIDE: return '/';
+        case SDLK_KP_MULTIPLY: return '*';
+        case SDLK_KP_MINUS: return '-';
+        case SDLK_KP_PLUS: return '+';
+        default: return 0;
     }
+}
+
+char input_get_shifted_char(unsigned char c) {
+    if (c > 127) { return c; }
 
     return SHIFTED_CHARS[c];
 }
 
-unsigned char input_caps_char(unsigned char c) {
+char input_get_caps_char(unsigned char c) {
+    if (c >= 'a' && c <= 'z') {
+        return c - 0x20;
+    }
 
+    return c;
+}
+
+char input_get_shifted_caps_char(unsigned char c) {
+    if (c >= 'a' && c <= 'z') {
+        return c;
+    }
+
+    return SHIFTED_CHARS[c];
 }

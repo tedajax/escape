@@ -41,6 +41,7 @@ bool game_init(Game *self, int argc, char *argv[]);
 int game_run(Game *self, int argc, char *argv[]);
 int game_update(void *pself);
 void game_render(Game *self);
+void game_print_startup(Game *self);
 void game_handle_events(Game *self);
 void game_handle_event(Game *self, SDL_Event event);
 void game_do_action(Game *self, Action action);

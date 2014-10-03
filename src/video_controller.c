@@ -209,6 +209,15 @@ void videoctl_backspace(VideoController *self) {
     videoctl_poke(self, self->cursor.x, self->cursor.y, value);
 }
 
+void videoctl_delete(VideoController *self) {
+    for (u32 i = self->cursor.x; i < (self->width - 1); ++i) {
+        u32 index = self->cursor.y * self->width + i;
+        self->data[index] = self->data[index + 1];
+    }
+    self->data[self->cursor.y * self->width + (self->width - 1)] = 0;
+    videoctl_dirty_range(self, self->cursor.y * self->width, self->cursor.y * self->width + (self->width - 1));
+}
+
 void videoctl_tab(VideoController *self) {
     videoctl_step_cursorc(self, 4);
 }
@@ -243,6 +252,11 @@ void videoctl_print(VideoController *self, const char *string) {
                 ++index;
                 break;
 
+            case 127:
+                videoctl_delete(self);
+                ++index;
+                break;
+
             case '\e':
                 start = index + 1;
                 end = start;
@@ -259,7 +273,9 @@ void videoctl_print(VideoController *self, const char *string) {
                     }
                 }
 
+                printf("Parsing\n");
                 cmdList = videocmd_parse(string, start + 1, end);
+                printf("Running\n");
                 videoctl_text_cmds(self, cmdList);
                 videocmd_free(cmdList);
 
@@ -511,12 +527,23 @@ void videoctl_render_glyphs(VideoController *self) {
 }
 
 u32 _videoctl_gen_data(VideoController *self, char c) {
-    u32 flags =  0b0000000000000011;
-    u32 value =  (flags << 16);
+    u32 value =  _videoctl_gen_flags(self);
     value     += (self->textState.bgColor << 12);
     value     += (self->textState.color << 8);
     value     += (u32)c;
     return value;
+}
+
+u32 _videoctl_gen_flags(VideoController *self) {
+    u32 flags = 0b0000000000000011;
+    if (self->textState.blink) {
+        flags += 0b100;
+    }
+    if (self->textState.bgBlink) {
+        flags += 0b1000;
+    }
+
+    return (flags << 16);
 }
 
 void videoctl_free(VideoController *self) {
@@ -557,9 +584,12 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
         return NULL;
     }
 
+    printf("Command count %d\n", cmdCount);
+
     const char *argDelim = ",";
     VideoCommand *current = root;
     for (u32 i = 0; i < cmdCount; ++i) {
+        printf("Cmd %d\n", i);
         char *cmd = calloc(strlen(cmdStrs[i]), sizeof(char));
         strcpy(cmd, cmdStrs[i]);
 
@@ -575,6 +605,8 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
             pParamStr = strtok(NULL, argDelim);
         }
 
+        printf("Cmd Params %d\n", i);
+
         if (paramCount == 0) {
             free(paramStrs);
             free(cmd);
@@ -583,18 +615,24 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
 
         VideoCommand *newCmd = videocmd_create(paramCount, paramStrs);
         
-        for (u32 i = 0; i < paramCount; ++i) {
-            free(paramStrs[i]);
-        }
-        free(paramStrs);
+        printf("Cmd Created %d\n", i);
 
-        free(cmd);
-        free(cmdStrs[i]);
+        // for (u32 i = 0; i < paramCount; ++i) {
+        //     free(paramStrs[i]);
+        // }
+        // printf("Cmd param poop %d\n", i);
+        // free(paramStrs);
+
+        // free(cmd);
+        // free(cmdStrs[i]);
+
+        printf ("Freed up %d\n", i);
 
         if (newCmd) {
             current->next = newCmd;
             current = current->next;
         }
+        printf("Done cmd %d\n", i);
     }    
 
     free(cmdStrs);

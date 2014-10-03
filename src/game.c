@@ -84,6 +84,7 @@ int game_run(Game *self, int argc, char *argv[]) {
         printf("SDL_CreateThread: %s\n", SDL_GetError());
     }
 
+    game_print_startup(self);
     room_look(self->currentRoom);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
@@ -180,6 +181,14 @@ void game_render(Game *self) {
     SDL_RenderPresent(self->renderer);
 }
 
+void game_print_startup(Game *self) {
+    game_printf("\n");
+    game_printf("\t\t\t\tWELCOME TO GAME!\n");
+    game_printf("There is much fun to be had in game you can play with text.\n");
+    game_printf("\e[c,1;blink,on]HAHAHAHAHAHAHA\e[c,8;blink,off]\n");
+    game_printf("\n");
+}
+
 void game_handle_events(Game *self) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
@@ -193,7 +202,7 @@ void game_handle_event(Game *self, SDL_Event event) {
             self->run = false;
             break;
 
-        case SDL_KEYDOWN:
+        case SDL_KEYDOWN: {
             if (event.key.keysym.sym == SDLK_ESCAPE) {
                 self->run = false;
             } 
@@ -212,8 +221,12 @@ void game_handle_event(Game *self, SDL_Event event) {
             //     videoctl_set_color(self->video, rand() % 7 + 1);
             //     videoctl_set_bgcolor(self->video, rand() % 7 + 1);
             // }
-            input_get_event_char(event);
+            char c = input_get_event_char(event);
+            if (c) {
+                videoctl_printf(self->video, "%c", c);
+            }
             break;
+        }
 
         default: break;
     }

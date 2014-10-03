@@ -152,6 +152,7 @@ void videoctl_form_feed(VideoController *self);
 void videoctl_carriage_return(VideoController *self);
 void videoctl_new_line(VideoController *self);
 void videoctl_backspace(VideoController *self);
+void videoctl_delete(VideoController *self);
 void videoctl_tab(VideoController *self);
 void videoctl_print(VideoController *self, const char *string);
 void videoctl_printf(VideoController *self, const char *format, ...);
@@ -174,6 +175,7 @@ void videoctl_update_range(VideoController *self, Range range);
 void videoctl_render_glyphs(VideoController *self);
 
 u32 _videoctl_gen_data(VideoController *self, char c);
+u32 _videoctl_gen_flags(VideoController *self);
 
 void videoctl_free(VideoController *self);
 
