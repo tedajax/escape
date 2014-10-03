@@ -121,8 +121,15 @@ typedef struct video_controller_t {
     int glyphHeight;
     TTF_Font *font;
     bool blinkFlag;
-    u32 ticks;
+    u32 blinkTicks;
     u32 blinkDelay;
+
+    bool cursorBlinkFlag;
+    u32 cursorBlinkDelay;
+    u32 cursorBlinkTicks;
+    bool showCursor;
+
+    bool inputOn;
     
     bool dirty;
     Vector *dirtyRanges;
@@ -158,6 +165,8 @@ void videoctl_clear(VideoController *self);
 void videoctl_text_cmds(VideoController *self, VideoCommand *cmdList);
 void videoctl_text_cmd(VideoController *self, VideoCommand cmd);
 void videoctl_give_time(VideoController *self, u32 milliseconds);
+
+void videoctl_handle_input(VideoController *self, u8 key);
 
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
 void videoctl_update_glyphs(VideoController *self);

@@ -20,8 +20,6 @@ void game_free(Game *self) {
 bool game_init(Game *self, int argc, char *argv[]) {
     srand(time(NULL));
 
-    SET_COLOR(WHITE);
-
     world_load(self->world, "data/test.json");
     self->currentRoom = world_get_room(self->world, 1);
     
@@ -63,12 +61,6 @@ bool game_init(Game *self, int argc, char *argv[]) {
 
     self->screen = SDL_GetWindowSurface(self->window);
 
-    for (int ai = 0; ai < argc; ++ai) {
-        if (strcmp(argv[ai], "--color") == 0) {
-            g_enable_colors = 1;
-        }
-    }
-
     self->video = videoctl_new(self->renderer);
     videoctl_set_mode(self->video, 100, 43);
     videoctl_open_font(self->video, "assets/terminus.ttf", 14);
@@ -100,7 +92,7 @@ int game_run(Game *self, int argc, char *argv[]) {
     u32 secondsTimer = 0;
     u32 frames = 0;
     while (self->run) {
-        game_proc_events(self);
+        game_handle_events(self);
 
         u32 ticks = SDL_GetTicks();
         u32 delta = ticks - lastTickCount;
@@ -188,54 +180,42 @@ void game_render(Game *self) {
     SDL_RenderPresent(self->renderer);
 }
 
-void game_proc_events(Game *self) {
+void game_handle_events(Game *self) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
-        switch(event.type) {
-            case SDL_QUIT:
+        game_handle_event(self, event);
+    }
+}
+
+void game_handle_event(Game *self, SDL_Event event) {
+    switch (event.type) {
+        case SDL_QUIT:
+            self->run = false;
+            break;
+
+        case SDL_KEYDOWN:
+            if (event.key.keysym.sym == SDLK_ESCAPE) {
                 self->run = false;
-                break;
+            } 
+            // else if (event.key.keysym.sym == SDLK_p) {
+            //     u32 x = rand() % self->video->width;
+            //     u32 y = rand() % self->video->height;
+            //     u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
+            //     videoctl_poke(self->video, x, y, v);
+            //     videoctl_update_glyphs(self->video);
+            // } else if (event.key.keysym.sym == SDLK_RETURN) {
+            //     videoctl_form_feed(self->video);
+            //     videoctl_update_glyphs(self->video);
+            // } else if (event.key.keysym.sym == SDLK_c) {
+            //     videoctl_clear(self->video);
+            // } else if (event.key.keysym.sym == SDLK_x) {
+            //     videoctl_set_color(self->video, rand() % 7 + 1);
+            //     videoctl_set_bgcolor(self->video, rand() % 7 + 1);
+            // }
+            input_get_event_char(event);
+            break;
 
-            case SDL_KEYDOWN:
-                if (event.key.keysym.sym == SDLK_ESCAPE) {
-                    self->run = false;
-                } else if (event.key.keysym.sym == SDLK_p) {
-                    u32 x = rand() % self->video->width;
-                    u32 y = rand() % self->video->height;
-                    u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
-                    videoctl_poke(self->video, x, y, v);
-                    videoctl_update_glyphs(self->video);
-                } else if (event.key.keysym.sym == SDLK_RETURN) {
-                    videoctl_form_feed(self->video);
-                    videoctl_update_glyphs(self->video);
-                } else if (event.key.keysym.sym == SDLK_MINUS) {
-                    if (self->updateDelay > 10) {
-                        self->updateDelay -= 10;
-                    } else if (self->updateDelay > 1) {
-                        --self->updateDelay;
-                    } else {
-                        self->updateDelay = 0;
-                    }
-
-                    printf("Update Delay: %d\n", self->updateDelay);
-                } else if (event.key.keysym.sym == SDLK_EQUALS) {
-                    if (self->updateDelay >= 10) {
-                        self->updateDelay += 10;
-                    } else {
-                        ++self->updateDelay;
-                    }
-
-                    printf("Update Delay: %d\n", self->updateDelay);
-                } else if (event.key.keysym.sym == SDLK_c) {
-                    videoctl_clear(self->video);
-                } else if (event.key.keysym.sym == SDLK_x) {
-                    videoctl_set_color(self->video, rand() % 7 + 1);
-                    videoctl_set_bgcolor(self->video, rand() % 7 + 1);
-                }
-                break;
-
-            default: break;
-        }
+        default: break;
     }
 }
 
@@ -315,28 +295,28 @@ void game_do_command(Game *self, Action action) {
         case VERB_COLOR:
             if (strcmp(action.cmdArg, "black") == 0) {
                 SET_COLOR(BLACK);
-                BASE = BLACK;
+                SET_BASE(BLACK);
             } else if (strcmp(action.cmdArg, "red") == 0) {
                 SET_COLOR(RED);
-                BASE = RED;
+                SET_BASE(RED);
             } else if (strcmp(action.cmdArg, "green") == 0) {
                 SET_COLOR(GREEN);
-                BASE = GREEN;
+                SET_BASE(GREEN);
             } else if (strcmp(action.cmdArg, "yellow") == 0) {
+                SET_BASE(YELLOW);
                 SET_COLOR(YELLOW);
-                BASE = YELLOW;
             } else if (strcmp(action.cmdArg, "blue") == 0) {
                 SET_COLOR(BLUE);
-                BASE = BLUE;
+                SET_BASE(BLUE);
             } else if (strcmp(action.cmdArg, "magenta") == 0) {
                 SET_COLOR(MAGENTA);
-                BASE = MAGENTA;
+                SET_BASE(MAGENTA);
             } else if (strcmp(action.cmdArg, "cyan") == 0) {
                 SET_COLOR(CYAN);
-                BASE = CYAN;
+                SET_BASE(CYAN);
             } else if (strcmp(action.cmdArg, "white") == 0) {
                 SET_COLOR(WHITE);
-                BASE = WHITE;
+                SET_BASE(WHITE);
             } else {
                 printf("Unknown color: %s\n", action.cmdArg);
             }
@@ -345,6 +325,10 @@ void game_do_command(Game *self, Action action) {
 }
 
 void game_printf(const char *format, ...) {
+    if (!g_video) {
+        return;
+    }
+
     va_list args;
     va_start(args, format);
     videoctl_printfv(g_video, format, args);

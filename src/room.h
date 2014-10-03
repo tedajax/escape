@@ -2,6 +2,7 @@
 #define _ROOM_H_
 
 #include "types.h"
+#include "util.h"
 #include "containers.h"
 #include "json.h"
 #include "term.h"

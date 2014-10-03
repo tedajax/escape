@@ -20,6 +20,10 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->textState.color = VIDEO_COLOR_WHITE;
     self->textState.bgColor = VIDEO_COLOR_BLACK;
     self->blinkDelay = 500;
+    self->showCursor = true;
+    self->cursorBlinkFlag = false;
+    self->cursorBlinkDelay = 250;
+    self->inputOn = false;
     return self;
 }
 
@@ -380,11 +384,17 @@ void videoctl_text_cmd(VideoController *self, VideoCommand cmd) {
 }
 
 void videoctl_give_time(VideoController *self, u32 milliseconds) {
-    self->ticks += milliseconds;
-    while (self->ticks > self->blinkDelay) {
-        self->ticks -= self->blinkDelay;
+    self->blinkTicks += milliseconds;
+    while (self->blinkTicks > self->blinkDelay) {
+        self->blinkTicks -= self->blinkDelay;
         self->blinkFlag = !self->blinkFlag;
         videoctl_dirty_range(self, 0, self->size - 1);
+    }
+
+    self->cursorBlinkTicks += milliseconds;
+    while (self->cursorBlinkTicks > self->cursorBlinkDelay) {
+        self->cursorBlinkTicks -= self->cursorBlinkDelay;
+        self->cursorBlinkFlag = !self->cursorBlinkFlag;
     }
 }
 
@@ -481,6 +491,22 @@ void videoctl_render_glyphs(VideoController *self) {
                            &self->glyphs[i].rect,
                            &rect);
         }
+    }
+
+    if (!self->showCursor) {
+        return;
+    }
+
+    SDL_Rect cursorRect = {
+        self->cursor.x * self->glyphWidth,
+        self->cursor.y * 14 - 2,
+        self->glyphWidth,
+        self->glyphHeight
+    };
+
+    if (!self->cursorBlinkFlag) {
+        SDL_SetRenderDrawColor(self->renderer, 255, 255, 255, 255);
+        SDL_RenderFillRect(self->renderer, &cursorRect);
     }
 }
 
