@@ -277,7 +277,9 @@ void videoctl_print(VideoController *self, const char *string) {
                 cmdList = videocmd_parse(string, start + 1, end);
                 printf("Running\n");
                 videoctl_text_cmds(self, cmdList);
+                printf("Done\n");
                 videocmd_free(cmdList);
+                printf("Freed\n");
 
                 index = end + 1;
                 break;
@@ -595,12 +597,12 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
 
         u32 paramCount = 0;
         u32 paramLimit = 3;
-        const u32 paramLengthLimit = 8;
+        const u32 paramLengthLimit = 32;
         char **paramStrs = calloc(paramLimit, sizeof(char *));
         char *pParamStr = strtok(cmd, argDelim);
         while (pParamStr) {
             paramStrs[paramCount] = calloc(paramLengthLimit, sizeof(char));
-            strncpy(paramStrs[paramCount], pParamStr, paramLengthLimit);
+            strcpy(paramStrs[paramCount], pParamStr);
             ++paramCount;
             pParamStr = strtok(NULL, argDelim);
         }
@@ -617,14 +619,16 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
         
         printf("Cmd Created %d\n", i);
 
-        // for (u32 i = 0; i < paramCount; ++i) {
-        //     free(paramStrs[i]);
-        // }
-        // printf("Cmd param poop %d\n", i);
-        // free(paramStrs);
+        for (u32 j = 0; j < paramCount; ++j) {
+            printf("Cmd free param %d %d %s\n", i, j, paramStrs[j]);
+            free(paramStrs[j]);
+            printf("Cmd freed param %d %d\n", i, j);
+        }
+        printf("Cmd param poop %d\n", i);
+        free(paramStrs);
 
-        // free(cmd);
-        // free(cmdStrs[i]);
+        free(cmd);
+        free(cmdStrs[i]);
 
         printf ("Freed up %d\n", i);
 
