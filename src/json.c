@@ -185,11 +185,11 @@ JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const cha
         json_token_set_type(self, type);
     }
 
-    size_t dataLen = token.end - token.start;
+    size_t dataLen = (token.end - token.start) + 1;
     char *dataStr = calloc(dataLen, sizeof(char));
     char *dataEnd;
 
-    memcpy(dataStr, &js[token.start], dataLen);
+    memcpy(dataStr, &js[token.start], dataLen - 1);
 
     switch (self->type) {
         case JS_TOKEN_BOOLEAN:
@@ -207,7 +207,7 @@ JsonToken *json_token_create(JsonToken *self, jsmntok_t token, int id, const cha
             break;
 
         case JS_TOKEN_STRING:
-            self->data = string_reserve(dataLen + 1);
+            self->data = string_reserve(dataLen);
             memcpy(((String *)self->data)->characters, dataStr, dataLen);
             break;
 

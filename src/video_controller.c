@@ -273,13 +273,9 @@ void videoctl_print(VideoController *self, const char *string) {
                     }
                 }
 
-                printf("Parsing\n");
                 cmdList = videocmd_parse(string, start + 1, end);
-                printf("Running\n");
                 videoctl_text_cmds(self, cmdList);
-                printf("Done\n");
                 videocmd_free(cmdList);
-                printf("Freed\n");
 
                 index = end + 1;
                 break;
@@ -586,13 +582,10 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
         return NULL;
     }
 
-    printf("Command count %d\n", cmdCount);
-
     const char *argDelim = ",";
     VideoCommand *current = root;
     for (u32 i = 0; i < cmdCount; ++i) {
-        printf("Cmd %d\n", i);
-        char *cmd = calloc(strlen(cmdStrs[i]), sizeof(char));
+        char *cmd = calloc(strlen(cmdStrs[i]) + 1, sizeof(char));
         strcpy(cmd, cmdStrs[i]);
 
         u32 paramCount = 0;
@@ -607,8 +600,6 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
             pParamStr = strtok(NULL, argDelim);
         }
 
-        printf("Cmd Params %d\n", i);
-
         if (paramCount == 0) {
             free(paramStrs);
             free(cmd);
@@ -616,27 +607,19 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
         }
 
         VideoCommand *newCmd = videocmd_create(paramCount, paramStrs);
-        
-        printf("Cmd Created %d\n", i);
 
         for (u32 j = 0; j < paramCount; ++j) {
-            printf("Cmd free param %d %d %s\n", i, j, paramStrs[j]);
             free(paramStrs[j]);
-            printf("Cmd freed param %d %d\n", i, j);
         }
-        printf("Cmd param poop %d\n", i);
         free(paramStrs);
 
         free(cmd);
         free(cmdStrs[i]);
 
-        printf ("Freed up %d\n", i);
-
         if (newCmd) {
             current->next = newCmd;
             current = current->next;
         }
-        printf("Done cmd %d\n", i);
     }    
 
     free(cmdStrs);
