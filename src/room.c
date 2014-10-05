@@ -93,9 +93,9 @@ void room_get_exit_names(Room *self, char *dest) {
     for (u32 i = 0; i < EXIT_COUNT; ++i) {
         if (self->exits[i] > 0) {
             ++exitsNamed;
-            currentIndex = strappend(dest, currentIndex, "\e[c,1]");
+            currentIndex = strappend(dest, currentIndex, "\e[c,9]");
             currentIndex = strappend(dest, currentIndex, EXIT_NAMES[i]);
-            currentIndex = strappend(dest, currentIndex, "\e[c,8]");
+            currentIndex = strappend(dest, currentIndex, "\e[c,15]");
             currentIndex = strappend(dest, currentIndex, exitEnd);
         }
 

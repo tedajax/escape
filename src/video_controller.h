@@ -10,19 +10,7 @@
 
 #include "types.h"
 #include "containers.h"
-
-typedef enum video_colors_e {
-    VIDEO_COLOR_BLACK = 0,
-    VIDEO_COLOR_RED,
-    VIDEO_COLOR_GREEN,
-    VIDEO_COLOR_BLUE,
-    VIDEO_COLOR_CYAN,
-    VIDEO_COLOR_YELLOW,
-    VIDEO_COLOR_MAGENTA,
-    VIDEO_COLOR_GREY,
-    VIDEO_COLOR_WHITE,
-    VIDEO_COLOR_COUNT
-} VideoColor;
+#include "colors.h"
 
 typedef enum video_commands_e {
     VIDEO_CMD_NOOP,
@@ -35,15 +23,13 @@ typedef enum video_commands_e {
     VIDEO_CMD_LAST
 } VideoCommands;
 
-extern u32 VIDEO_COLORS[VIDEO_COLOR_COUNT];
-
 typedef struct range_t {
     u32 start;
     u32 end;
 } Range;
 
 // Glyph Flags - 16 bits
-// FEDC BA98 7654 3210
+// 7654 3210
 //
 // 0 - Show flag, if 1 show the glyph fg
 // 1 - Show background flag, if 1 show the glyph bg
@@ -52,7 +38,7 @@ typedef struct range_t {
 // 4 - Bold
 // 5 - Italics
 // 6 - Underline
-// 7-F - Unused at this time
+// 7 - Unused at this time
 
 typedef enum glyph_flag_e {
     GLYPH_SHOW_FG       = 0x1,
@@ -130,7 +116,7 @@ typedef struct video_controller_t {
     bool showCursor;
 
     bool inputOn;
-    
+
     bool dirty;
     Vector *dirtyRanges;
 
@@ -173,6 +159,8 @@ void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
 void videoctl_update_glyphs(VideoController *self);
 void videoctl_update_range(VideoController *self, Range range);
 void videoctl_render_glyphs(VideoController *self);
+
+void videoctl_color_test(VideoController *self);
 
 u32 _videoctl_gen_data(VideoController *self, char c);
 u32 _videoctl_gen_flags(VideoController *self);

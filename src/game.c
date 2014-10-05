@@ -22,7 +22,7 @@ bool game_init(Game *self, int argc, char *argv[]) {
 
     world_load(self->world, "data/test.json");
     self->currentRoom = world_get_room(self->world, 1);
-    
+
     self->run = init_tables();
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -84,11 +84,12 @@ int game_run(Game *self, int argc, char *argv[]) {
         printf("SDL_CreateThread: %s\n", SDL_GetError());
     }
 
-    game_print_startup(self);
-    room_look(self->currentRoom);
+    // game_print_startup(self);
+    // room_look(self->currentRoom);
+    videoctl_color_test(self->video);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
-    
+
     u32 lastTickCount = 0;
     u32 secondsTimer = 0;
     u32 frames = 0;
@@ -146,7 +147,7 @@ int game_update(void *pself) {
 
         // Vector *words = parse_words(inputStr);
         // Action action = parse_action(words);
-        
+
         // if (G_VERB_PATTERNS[action.verb] & VP_COMMAND) {
         //     game_do_command(self, action);
         // } else {
@@ -155,13 +156,13 @@ int game_update(void *pself) {
 
         // vector_free(words);
         // string_free(inputStr);
-        
+
         //u32 v = ((rand() % 26) + 64) + ((rand() % 7 + 1) << 8);
         //videoctl_poke(self->video, x, y, v);
 
         // videoctl_printf(self->video, "\e[c,8;b,1]Testing\e[b,0] \e[c,5;b,2]colors\e[b,0] \e[c,2;b,3]wow\e[b,0] ", 5+10, 3.14f);
         // videoctl_update_glyphs(self->video);
-        
+
         ticks = SDL_GetTicks();
         videoctl_give_time(self->video, ticks - lastTicks);
         lastTicks = ticks;
@@ -185,7 +186,7 @@ void game_print_startup(Game *self) {
     game_printf("\n");
     game_printf("\t\t\t\tWELCOME TO GAME!\n");
     game_printf("There is much fun to be had in game you can play with text.\n");
-    game_printf("\e[c,1;blink,on]HAHAHAHAHAHAHA\e[c,8;blink,off]\n");
+    game_printf("\e[c,9;blink,on]HAHAHAHAHAHAHA\e[c,15;blink,off]\n");
     game_printf("\n");
 }
 
@@ -205,22 +206,7 @@ void game_handle_event(Game *self, SDL_Event event) {
         case SDL_KEYDOWN: {
             if (event.key.keysym.sym == SDLK_ESCAPE) {
                 self->run = false;
-            } 
-            // else if (event.key.keysym.sym == SDLK_p) {
-            //     u32 x = rand() % self->video->width;
-            //     u32 y = rand() % self->video->height;
-            //     u32 v = ((rand() % 26) + 65) + ((rand() % 8) << 8);
-            //     videoctl_poke(self->video, x, y, v);
-            //     videoctl_update_glyphs(self->video);
-            // } else if (event.key.keysym.sym == SDLK_RETURN) {
-            //     videoctl_form_feed(self->video);
-            //     videoctl_update_glyphs(self->video);
-            // } else if (event.key.keysym.sym == SDLK_c) {
-            //     videoctl_clear(self->video);
-            // } else if (event.key.keysym.sym == SDLK_x) {
-            //     videoctl_set_color(self->video, rand() % 7 + 1);
-            //     videoctl_set_bgcolor(self->video, rand() % 7 + 1);
-            // }
+            }
             char c = input_get_event_char(event);
             if (c) {
                 videoctl_printf(self->video, "%c", c);

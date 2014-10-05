@@ -1,17 +1,5 @@
 #include "video_controller.h"
 
-u32 VIDEO_COLORS[VIDEO_COLOR_COUNT] = {
-    0x000000,
-    0xff0000,
-    0x00ff00,
-    0x0000ff,
-    0x00ffff,
-    0xffff00,
-    0xff00ff,
-    0x7f7f7f,
-    0xffffff
-};
-
 VideoController *videoctl_new(SDL_Renderer *renderer) {
     VideoController *self = (VideoController *)calloc(1, sizeof(VideoController));
     self->renderer = renderer;
@@ -62,11 +50,12 @@ bool videoctl_open_font(VideoController *self, const char *filename, u32 px) {
     self->font = font;
 
     SDL_Color white = { 255, 255, 255 };
+    //TTF_SetFontStyle(self->font, TTF_STYLE_BOLD);
     SDL_Surface *surface = TTF_RenderText_Solid(self->font, "A", white);
     SDL_Texture *texture = SDL_CreateTextureFromSurface(self->renderer, surface);
 
     SDL_QueryTexture(texture, NULL, NULL, &self->glyphWidth, &self->glyphHeight);
-
+    printf("%d %d\n", self->glyphWidth, self->glyphHeight);
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 
@@ -90,7 +79,7 @@ void videoctl_generate_glyph_table(VideoController *self) {
 
     u32 textSurfaceW = 256 * self->glyphWidth;
     u32 textSurfaceH = (VIDEO_COLOR_COUNT + 1) * self->glyphHeight;
-    SDL_Surface *textSurface = 
+    SDL_Surface *textSurface =
         SDL_CreateRGBSurface(0,
                              textSurfaceW, textSurfaceH,
                              32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
@@ -134,7 +123,7 @@ void videoctl_generate_glyph_table(VideoController *self) {
         SDL_BlitSurface(surface, NULL, textSurface, &rect);
         SDL_FreeSurface(surface);
     }
-
+    IMG_SavePNG(textSurface, "a.png");
     self->glyphTexture = SDL_CreateTextureFromSurface(self->renderer, textSurface);
     SDL_FreeSurface(textSurface);
 
@@ -391,7 +380,7 @@ void videoctl_text_cmd(VideoController *self, VideoCommand cmd) {
 
         case VIDEO_CMD_BLINK_BG:
             self->textState.bgBlink = videocmd_bool(cmd, self->textState.bgBlink);
-            break;            
+            break;
 
         default: break;
     }
@@ -449,9 +438,9 @@ void videoctl_update_range(VideoController *self, Range range) {
         if (i >= self->size) { break; }
 
         u32 value = self->data[i];
-        u32 colorIndex = ((value & 0xF00) >> 8);
-        u32 bgColorIndex = ((value & 0xF000) >> 12);
-        GlyphFlags flags = ((value & 0xFFFF0000) >> 16);
+        u32 colorIndex = ((value & 0xFF00) >> 8);
+        u32 bgColorIndex = ((value & 0xFF0000) >> 16);
+        GlyphFlags flags = ((value & 0xFFFF0000) >> 24);
         char glyph = (value & 0xFF);
 
         self->glyphs[i].flags = flags;
@@ -467,7 +456,7 @@ void videoctl_update_range(VideoController *self, Range range) {
         self->glyphs[i].bgRect.h = self->glyphHeight;
 
         bool showFG = (flags & GLYPH_SHOW_FG);
-        bool showBG = (flags & GLYPH_SHOW_BG);
+        bool showBG = true; //(flags & GLYPH_SHOW_BG);
         bool blinkFG = (flags & GLYPH_BLINK_FG);
         bool blinkBG = (flags & GLYPH_BLINK_BG);
 
@@ -488,7 +477,7 @@ void videoctl_render_glyphs(VideoController *self) {
         for (u32 col = 0; col < self->width; ++col) {
             u32 i = row * self->width + col;
 
-            SDL_Rect rect = { 
+            SDL_Rect rect = {
                 col * self->glyphWidth,
                 row * 14 - 2,
                 self->glyphWidth,
@@ -524,16 +513,31 @@ void videoctl_render_glyphs(VideoController *self) {
     }
 }
 
+void videoctl_color_test(VideoController *self) {
+    const u32 PER_COLOR = 8;
+    u32 color = 0;
+    for (u32 row = 0; row < 32; ++row) {
+        for (u32 col = 0; col < (8 * PER_COLOR); ++col) {
+            videoctl_poke(self, col, row, (color << 16));
+            if (col % PER_COLOR == (PER_COLOR - 1)) {
+                ++color;
+            }
+        }
+    }
+
+    videoctl_dirty_range(self, 0, self->size - 1);
+}
+
 u32 _videoctl_gen_data(VideoController *self, char c) {
     u32 value =  _videoctl_gen_flags(self);
-    value     += (self->textState.bgColor << 12);
+    value     += (self->textState.bgColor << 16);
     value     += (self->textState.color << 8);
     value     += (u32)c;
     return value;
 }
 
 u32 _videoctl_gen_flags(VideoController *self) {
-    u32 flags = 0b0000000000000011;
+    u32 flags = 0b00000011;
     if (self->textState.blink) {
         flags += 0b100;
     }
@@ -541,7 +545,7 @@ u32 _videoctl_gen_flags(VideoController *self) {
         flags += 0b1000;
     }
 
-    return (flags << 16);
+    return (flags << 24);
 }
 
 void videoctl_free(VideoController *self) {
@@ -620,7 +624,7 @@ VideoCommand *videocmd_parse(const char *str, u32 start, u32 end) {
             current->next = newCmd;
             current = current->next;
         }
-    }    
+    }
 
     free(cmdStrs);
 
