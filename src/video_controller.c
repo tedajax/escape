@@ -55,7 +55,6 @@ bool videoctl_open_font(VideoController *self, const char *filename, u32 px) {
     SDL_Texture *texture = SDL_CreateTextureFromSurface(self->renderer, surface);
 
     SDL_QueryTexture(texture, NULL, NULL, &self->glyphWidth, &self->glyphHeight);
-    printf("%d %d\n", self->glyphWidth, self->glyphHeight);
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
 
@@ -68,17 +67,16 @@ bool videoctl_open_font(VideoController *self, const char *filename, u32 px) {
 void videoctl_generate_glyph_table(VideoController *self) {
     //TODO clear existing glyph table
 
-    char *glyphStr = calloc(256, sizeof(char));
-    for (int i = 1; i < 256; ++i) {
+    char *glyphStr = calloc(129, sizeof(char));
+    for (int i = 1; i < 128; ++i) {
         char c = (char)i;
         glyphStr[i - 1] = c;
     }
-    glyphStr[255] = '\0';
 
     printf("Generating glyphs...");
 
     u32 textSurfaceW = 256 * self->glyphWidth;
-    u32 textSurfaceH = (VIDEO_COLOR_COUNT + 1) * self->glyphHeight;
+    u32 textSurfaceH = ((VIDEO_COLOR_COUNT / 2) + 1) * self->glyphHeight;
     SDL_Surface *textSurface =
         SDL_CreateRGBSurface(0,
                              textSurfaceW, textSurfaceH,
@@ -94,8 +92,8 @@ void videoctl_generate_glyph_table(VideoController *self) {
         SDL_Color color = { r, g, b, 255 };
         SDL_Surface *surface = TTF_RenderText_Blended(self->font, glyphStr, color);
         SDL_Rect rect = {
-            0,
-            col * self->glyphHeight,
+            (col % 2) * 1024,
+            (col / 2) * self->glyphHeight,
             256 * self->glyphWidth,
             self->glyphHeight
         };
@@ -116,7 +114,7 @@ void videoctl_generate_glyph_table(VideoController *self) {
         SDL_FillRect(surface, NULL, SDL_MapRGB(surface->format, r, g, b));
         SDL_Rect rect = {
             col * self->glyphWidth,
-            VIDEO_COLOR_COUNT * self->glyphHeight,
+            (VIDEO_COLOR_COUNT / 2) * self->glyphHeight,
             self->glyphWidth,
             self->glyphHeight
         };
@@ -445,13 +443,14 @@ void videoctl_update_range(VideoController *self, Range range) {
 
         self->glyphs[i].flags = flags;
 
-        self->glyphs[i].rect.x = (int)(glyph - 1) * self->glyphWidth;
-        self->glyphs[i].rect.y = colorIndex * self->glyphHeight;
+        int colorColumn = (colorIndex % 2) * 1024;
+        self->glyphs[i].rect.x = (int)(glyph - 1) * self->glyphWidth + colorColumn;
+        self->glyphs[i].rect.y = (colorIndex / 2) * self->glyphHeight;
         self->glyphs[i].rect.w = self->glyphWidth;
         self->glyphs[i].rect.h = self->glyphHeight;
 
         self->glyphs[i].bgRect.x = bgColorIndex * self->glyphWidth;
-        self->glyphs[i].bgRect.y = VIDEO_COLOR_COUNT * self->glyphHeight;
+        self->glyphs[i].bgRect.y = (VIDEO_COLOR_COUNT / 2) * self->glyphHeight;
         self->glyphs[i].bgRect.w = self->glyphWidth;
         self->glyphs[i].bgRect.h = self->glyphHeight;
 

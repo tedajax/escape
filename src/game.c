@@ -84,9 +84,10 @@ int game_run(Game *self, int argc, char *argv[]) {
         printf("SDL_CreateThread: %s\n", SDL_GetError());
     }
 
-    // game_print_startup(self);
-    // room_look(self->currentRoom);
+
     videoctl_color_test(self->video);
+    game_print_startup(self);
+    room_look(self->currentRoom);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
 
