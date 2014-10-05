@@ -1,1 +1,0 @@
-ansicon escape.exe --color
