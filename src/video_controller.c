@@ -124,7 +124,6 @@ void videoctl_generate_glyph_table(VideoController *self) {
         SDL_BlitSurface(surface, NULL, textSurface, &rect);
         SDL_FreeSurface(surface);
     }
-    IMG_SavePNG(textSurface, "a.png");
     self->glyphTexture = SDL_CreateTextureFromSurface(self->renderer, textSurface);
     SDL_FreeSurface(textSurface);
 
@@ -487,10 +486,10 @@ void videoctl_render_glyphs(VideoController *self) {
             u32 i = row * self->width + col;
 
             SDL_Rect rect = {
-                col * self->glyphWidth,
-                row * 14 - 2,
-                self->glyphWidth,
-                self->glyphHeight
+                col * self->glyphWidth * 2,
+                row * self->glyphHeight * 2,
+                self->glyphWidth * 2,
+                self->glyphHeight * 2
             };
 
             SDL_RenderCopy(self->renderer,
@@ -510,10 +509,10 @@ void videoctl_render_glyphs(VideoController *self) {
     }
 
     SDL_Rect cursorRect = {
-        self->cursor.x * self->glyphWidth,
-        self->cursor.y * 14 - 2,
-        self->glyphWidth,
-        self->glyphHeight
+        self->cursor.x * self->glyphWidth * 2,
+        self->cursor.y * self->glyphHeight * 2,
+        self->glyphWidth * 2,
+        self->glyphHeight * 2
     };
 
     if (!self->cursorBlinkFlag) {
@@ -523,16 +522,16 @@ void videoctl_render_glyphs(VideoController *self) {
 }
 
 void videoctl_color_test(VideoController *self) {
-    const u32 PER_ROW = 6;
-    const u32 PER_COLOR = 12;
+    const u32 REPEAT_COUNT = 4;
     u32 color = 0;
-    for (u32 row = 0; row < 256 / PER_ROW; ++row) {
-        for (u32 col = 0; col < (PER_ROW * PER_COLOR); ++col) {
-            videoctl_poke(self, col, row, (0b11 << 24) + (color << 16) + (12 << 8) + 65);
-            if (col % PER_COLOR == (PER_COLOR - 1)) {
-                ++color;
-            }
+    videoctl_gotoxy(self, 0, 0);
+    for (u32 i = 0; i < REPEAT_COUNT * 256; ++i) {
+        videoctl_poke(self, self->cursor.x, self->cursor.y, (0b11 << 24) + (color << 16) + (VIDEO_COLOR_BLACK << 8) + (65 + color % 26));
+        ++color;
+        if (color >= VIDEO_COLOR_COUNT) {
+            color = 0;
         }
+        videoctl_step_cursor(self);
     }
 
     videoctl_dirty_range(self, 0, self->size - 1);

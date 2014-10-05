@@ -62,7 +62,7 @@ bool game_init(Game *self, int argc, char *argv[]) {
     self->screen = SDL_GetWindowSurface(self->window);
 
     self->video = videoctl_new(self->renderer);
-    videoctl_set_mode(self->video, 100, 43);
+    videoctl_set_mode(self->video, 50, 20);
     videoctl_open_font(self->video, "assets/terminus.ttf", 14);
     videoctl_update_glyphs(self->video);
     g_video = self->video;
