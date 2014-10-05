@@ -12,6 +12,7 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->cursorBlinkFlag = false;
     self->cursorBlinkDelay = 250;
     self->inputOn = false;
+    self->textState.bgColor = VIDEO_COLOR_CLEAR;
     return self;
 }
 
@@ -57,6 +58,8 @@ bool videoctl_open_font(VideoController *self, const char *filename, u32 px) {
     SDL_QueryTexture(texture, NULL, NULL, &self->glyphWidth, &self->glyphHeight);
     SDL_DestroyTexture(texture);
     SDL_FreeSurface(surface);
+
+    printf("%d %d\n", self->glyphWidth, self->glyphHeight);
 
     videoctl_generate_glyph_table(self);
     videoctl_dirty_range(self, 0, self->size - 1);
@@ -148,6 +151,12 @@ void videoctl_poke(VideoController *self, u32 x, u32 y, u32 value) {
     u32 pos = y * self->width + x;
     self->data[pos] = value;
     videoctl_dirty_range(self, pos, pos);
+}
+
+u32 videoctl_at_cursor(VideoController *self) {
+    assert(self);
+
+    return self->data[self->cursor.y * self->width + self->cursor.x];
 }
 
 void videoctl_form_feed(VideoController *self) {
@@ -299,6 +308,7 @@ void videoctl_putc(VideoController *self, char c) {
     assert(self);
 
     u32 value = _videoctl_gen_data(self, c);
+    
     videoctl_poke(self, self->cursor.x, self->cursor.y, value);
     videoctl_step_cursor(self);
 }
@@ -513,11 +523,12 @@ void videoctl_render_glyphs(VideoController *self) {
 }
 
 void videoctl_color_test(VideoController *self) {
-    const u32 PER_COLOR = 8;
+    const u32 PER_ROW = 6;
+    const u32 PER_COLOR = 12;
     u32 color = 0;
-    for (u32 row = 0; row < 32; ++row) {
-        for (u32 col = 0; col < (8 * PER_COLOR); ++col) {
-            videoctl_poke(self, col, row, (color << 16));
+    for (u32 row = 0; row < 256 / PER_ROW; ++row) {
+        for (u32 col = 0; col < (PER_ROW * PER_COLOR); ++col) {
+            videoctl_poke(self, col, row, (0b11 << 24) + (color << 16) + (12 << 8) + 65);
             if (col % PER_COLOR == (PER_COLOR - 1)) {
                 ++color;
             }
@@ -529,7 +540,11 @@ void videoctl_color_test(VideoController *self) {
 
 u32 _videoctl_gen_data(VideoController *self, char c) {
     u32 value =  _videoctl_gen_flags(self);
-    value     += (self->textState.bgColor << 16);
+    if (self->textState.bgColor != VIDEO_COLOR_CLEAR) {
+        value += (self->textState.bgColor << 16);
+    } else {
+        value += (videoctl_at_cursor(self) & 0x00FF0000) << 16;
+    }
     value     += (self->textState.color << 8);
     value     += (u32)c;
     return value;

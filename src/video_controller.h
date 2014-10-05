@@ -134,6 +134,7 @@ GlyphFlags videoctl_get_glyph_flags(VideoController *self);
 
 void videoctl_gotoxy(VideoController *self, u16 x, u16 y);
 void videoctl_poke(VideoController *self, u32 x, u32 y, u32 value);
+u32 videoctl_at_cursor(VideoController *self);
 void videoctl_form_feed(VideoController *self);
 void videoctl_carriage_return(VideoController *self);
 void videoctl_new_line(VideoController *self);
