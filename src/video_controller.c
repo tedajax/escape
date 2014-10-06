@@ -522,11 +522,10 @@ void videoctl_render_glyphs(VideoController *self) {
 }
 
 void videoctl_color_test(VideoController *self) {
-    const u32 REPEAT_COUNT = 4;
+    const u32 REPEAT_COUNT = 1;
     u32 color = 0;
-    videoctl_gotoxy(self, 0, 0);
     for (u32 i = 0; i < REPEAT_COUNT * 256; ++i) {
-        videoctl_poke(self, self->cursor.x, self->cursor.y, (0b11 << 24) + (color << 16) + (VIDEO_COLOR_BLACK << 8) + (65 + color % 26));
+        videoctl_poke(self, self->cursor.x, self->cursor.y, (0b11 << 24) + (color << 16) + (VIDEO_COLOR_BLACK << 8));
         ++color;
         if (color >= VIDEO_COLOR_COUNT) {
             color = 0;

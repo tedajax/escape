@@ -85,9 +85,9 @@ int game_run(Game *self, int argc, char *argv[]) {
     }
 
 
-    videoctl_color_test(self->video);
-    // game_print_startup(self);
-    // room_look(self->currentRoom);
+    //videoctl_color_test(self->video);
+    game_print_startup(self);
+    room_look(self->currentRoom);
 
     char * input = calloc(MAX_INPUT_LENGTH, sizeof(char));
 
@@ -207,11 +207,13 @@ void game_handle_event(Game *self, SDL_Event event) {
         case SDL_KEYDOWN: {
             if (event.key.keysym.sym == SDLK_ESCAPE) {
                 self->run = false;
+            } else if (event.key.keysym.sym == SDLK_t) {
+                videoctl_color_test(self->video);
             }
-            char c = input_get_event_char(event);
-            if (c) {
-                videoctl_printf(self->video, "%c", c);
-            }
+            // char c = input_get_event_char(event);
+            // if (c) {
+            //     videoctl_printf(self->video, "%c", c);
+            // }
             break;
         }
 

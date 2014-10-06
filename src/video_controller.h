@@ -36,10 +36,10 @@ typedef struct range_t {
 // 1 - Show background flag, if 1 show the glyph bg
 // 2 - Blink flag, if 1 blink the foreground
 // 3 - Blink BG flag, if 1 blink the background
-// 4 - Bold
-// 5 - Italics
-// 6 - Underline
-// 7 - Unused at this time
+// 4 - Unused
+// 5 - Unused
+// 6 - Unused
+// 7 - Unused
 
 typedef enum glyph_flag_e {
     GLYPH_SHOW_FG       = 0x1,
@@ -155,7 +155,7 @@ void videoctl_text_cmds(VideoController *self, VideoCommand *cmdList);
 void videoctl_text_cmd(VideoController *self, VideoCommand cmd);
 void videoctl_give_time(VideoController *self, u32 milliseconds);
 
-void videoctl_handle_input(VideoController *self, u8 key);
+void videoctl_handle_input(VideoController *self, SDL_Event event);
 
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
 void videoctl_update_glyphs(VideoController *self);

@@ -27,7 +27,7 @@ char input_get_event_char(SDL_Event event) {
 
     SDL_Keycode symbol = event.key.keysym.sym;
     SDL_Keymod mod = event.key.keysym.mod;
-    
+
     if (symbol == SDLK_UNKNOWN) {
         return 0;
     }
