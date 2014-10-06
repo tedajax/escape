@@ -207,10 +207,6 @@ void game_handle_event(Game *self, SDL_Event event) {
         case SDL_KEYDOWN: {
             if (event.key.keysym.sym == SDLK_ESCAPE) {
                 self->run = false;
-            } else if (event.key.keysym.sym == SDLK_t) {
-                videoctl_color_test(self->video);
-            } else if (event.key.keysym.sym == SDLK_c) {
-                videoctl_clear(self->video);
             } else {
                 videoctl_handle_input(self->video, event);
             }

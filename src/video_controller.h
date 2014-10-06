@@ -61,6 +61,12 @@ typedef enum glyph_flag_e {
     GLYPH_UNUSED_F      = 0x8000,
 } GlyphFlags;
 
+typedef enum input_mode_e {
+    VIDEO_INPUT_NONE,
+    VIDEO_INPUT_FREE,
+    VIDEO_INPUT_PROMPT
+} InputMode;
+
 typedef struct glyph_t {
     SDL_Rect rect;
     SDL_Rect bgRect;
@@ -117,13 +123,14 @@ typedef struct video_controller_t {
     u32 cursorBlinkTicks;
     bool showCursor;
 
-    bool inputOn;
+    char *prompt;
+    Point promptStart;
+    Point promptEnd;
+    InputMode inputMode;
 
     bool dirty;
     Vector *dirtyRanges;
-
     SDL_Renderer *renderer;
-
     SDL_mutex *dataMutex;
 } VideoController;
 
@@ -162,6 +169,9 @@ void videoctl_give_time(VideoController *self, u32 milliseconds);
 
 void videoctl_handle_input(VideoController *self, SDL_Event event);
 void videoctl_handle_control_input(VideoController *self, SDL_Event event);
+void videoctl_handle_special_input(VideoController *self, SDL_Event event);
+
+void videoctl_prompt(VideoController *self);
 
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
 void videoctl_update_glyphs(VideoController *self);

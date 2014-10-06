@@ -11,7 +11,8 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->showCursor = true;
     self->cursorBlinkFlag = false;
     self->cursorBlinkDelay = 250;
-    self->inputOn = true;
+    self->prompt = "> ";
+    self->inputMode = VIDEO_INPUT_FREE;
     self->textState.bgColor = VIDEO_COLOR_CLEAR;
     return self;
 }
@@ -191,6 +192,22 @@ void videoctl_new_line(VideoController *self) {
 }
 
 void videoctl_backspace(VideoController *self) {
+    bool canBackspace = (self->inputMode == INPUT_MODE_FREE);
+
+    if (self->inputMode == INPUT_MODE_PROMPT) {
+        if (self->cursor.y == self->promptStart.y) {
+            if (self->cursor.x > self->promptStart.x) {
+                canBackspace = true;
+            }
+        } else {
+            canBackspace = true;
+        }
+    }
+
+    if (!canBackspace) {
+        return;
+    }
+
     if (self->cursor.x > 0) {
         --self->cursor.x;
     } else {
@@ -218,27 +235,105 @@ void videoctl_tab(VideoController *self) {
 }
 
 void videoctl_cursor_up(VideoController *self) {
-    if (self->cursor.y > 0) {
-        --self->cursor.y;
+    switch (self->inputMode) {
+        case VIDEO_INPUT_FREE:
+            if (self->cursor.y > 0) {
+                --self->cursor.y;
+            }
+            break;
+
+        case VIDEO_INPUT_PROMPT:
+            if (self->cursor.y > self->promptStart.y) {
+                --self->cursor.y;
+                if (self->cursor.y == self->promptStart.y) {
+                    if (self->cursor.x < self->promptStart.x) {
+                        self->cursor.x = self->promptStart.x;
+                    }
+                }
+            }
+            break
+
+        default: break;
     }
 }
 
 void videoctl_cursor_down(VideoController *self) {
-    if (self->cursor.y < self->height - 1) {
-        ++self->cursor.y;
+    switch (self->inputMode) {
+        case VIDEO_INPUT_FREE:
+            if (self->cursor.y < self->promptEnd.y) {
+                ++self->cursor.y;
+                if (self->cursor.y == self->promptEnd.y) {
+                    if (self->cursor.x > self->promptEnd.x) {
+                        self->cursor.x = promptEnd.x;
+                    }
+                }
+            }
+            break;
+
+        case VIDEO_INPUT_PROMPT:
+
+            break
+
+        default: break;
     }
 }
 
 void videoctl_cursor_left(VideoController *self) {
-    if (self->cursor.x > 0) {
-        --self->cursor.x;
-    }
+    switch (self->inputMode) {
+        case VIDEO_INPUT_FREE:
+            if (self->cursor.x > 0) {
+                --self->cursor.x;
+            }
+            break;
+
+        case VIDEO_INPUT_PROMPT:
+            if (self->cursor.x > 0) {
+                if (self->cursor.y == self->promptStart.y) {
+                    if (self->cursor.x > self->promptStart.x) {
+                        --self->cursor.x;
+                    }
+                } else {
+                    --self->cursor.x;
+                }
+            } else {
+                if (self->cursor.y > self->promptStart.y) {
+                    self->cursor.x = self->width - 1;
+                    --self->cursor.y;
+                }
+            }
+            break
+
+        default: break;
+    }    
 }
 
 void videoctl_cursor_right(VideoController *self) {
-    if (self->cursor.x < self->width - 1) {
-        ++self->cursor.x;
-    }
+    switch (self->inputMode) {
+        case VIDEO_INPUT_FREE:
+            if (self->cursor.x < self->width - 1) {
+                ++self->cursor.x;
+            }
+            break;
+
+        case VIDEO_INPUT_PROMPT:
+            if (self->cursor.x < self->width - 1) {
+                if (self->cursor.y == self->prompEnd.y) {
+                    if (self->cursor.x < self->promptEnd.x) {
+                        ++self->curosr.x;
+                    }
+                } else {
+                    ++self->cursor.x;
+                }
+            } else {
+                if (self->cursor.y < self->promptEnd.y) {
+                    self->cursor.x = 0;
+                    ++self->cursor.y;
+                }
+            }
+            break
+
+        default: break;
+    }    
 }
 
 void videoctl_print(VideoController *self, const char *string) {
@@ -435,8 +530,12 @@ void videoctl_give_time(VideoController *self, u32 milliseconds) {
 void videoctl_handle_input(VideoController *self, SDL_Event event) {
     assert(self);
 
-    if (!self->inputOn) {
+    if (self->inputMode == VIDEO_INPUT_NONE) {
         return;
+    }
+
+    if ((event.key.keysym.sym & 0x40000000) > 0) {
+        videoctl_handle_special_input(self, event);
     }
 
     char c = input_get_event_char(event);
@@ -480,6 +579,9 @@ void videoctl_handle_control_input(VideoController *self, SDL_Event event) {
                     self->textState.color = 0;
                 }
                 break;
+
+            case SDLK_c: videoctl_clear(self); break;
+            case SDLK_t: videoctl_color_test(self); break;
             
             default: break;
         }
@@ -504,6 +606,17 @@ void videoctl_handle_control_input(VideoController *self, SDL_Event event) {
 
             default: break;
         }
+    }
+}
+
+void videoctl_handle_special_input(VideoController *self, SDL_Event event) {
+    SDL_Keycode key = event.key.keysym.sym;
+    switch (key) {
+        case SDLK_UP: videoctl_cursor_up(self); break;
+        case SDLK_DOWN: videoctl_cursor_down(self); break;
+        case SDLK_LEFT: videoctl_cursor_left(self); break;
+        case SDLK_RIGHT: videoctl_cursor_right(self); break;
+        default: break;
     }
 }
 
