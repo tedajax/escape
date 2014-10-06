@@ -12,6 +12,7 @@
 #include "types.h"
 #include "containers.h"
 #include "colors.h"
+#include "input.h"
 
 typedef enum video_commands_e {
     VIDEO_CMD_NOOP,
@@ -142,6 +143,10 @@ void videoctl_new_line(VideoController *self);
 void videoctl_backspace(VideoController *self);
 void videoctl_delete(VideoController *self);
 void videoctl_tab(VideoController *self);
+void videoctl_cursor_up(VideoController *self);
+void videoctl_cursor_down(VideoController *self);
+void videoctl_cursor_left(VideoController *self);
+void videoctl_cursor_right(VideoController *self);
 void videoctl_print(VideoController *self, const char *string);
 void videoctl_printf(VideoController *self, const char *format, ...);
 void videoctl_printfv(VideoController *self, const char *format, va_list args);
@@ -156,6 +161,7 @@ void videoctl_text_cmd(VideoController *self, VideoCommand cmd);
 void videoctl_give_time(VideoController *self, u32 milliseconds);
 
 void videoctl_handle_input(VideoController *self, SDL_Event event);
+void videoctl_handle_control_input(VideoController *self, SDL_Event event);
 
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end);
 void videoctl_update_glyphs(VideoController *self);

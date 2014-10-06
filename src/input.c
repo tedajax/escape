@@ -27,13 +27,15 @@ char input_get_event_char(SDL_Event event) {
 
     SDL_Keycode symbol = event.key.keysym.sym;
     SDL_Keymod mod = event.key.keysym.mod;
+    if ((mod & KMOD_CTRL) > 0 || (mod & KMOD_ALT) > 0) {
+        return 0;
+    }
 
     if (symbol == SDLK_UNKNOWN) {
         return 0;
     }
 
     if ((symbol & 0x40000000) > 0) {
-        printf("%d\n", symbol);
         char special = input_get_special_char(symbol);
         return special;
     }

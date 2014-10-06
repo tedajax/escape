@@ -11,7 +11,7 @@ VideoController *videoctl_new(SDL_Renderer *renderer) {
     self->showCursor = true;
     self->cursorBlinkFlag = false;
     self->cursorBlinkDelay = 250;
-    self->inputOn = false;
+    self->inputOn = true;
     self->textState.bgColor = VIDEO_COLOR_CLEAR;
     return self;
 }
@@ -217,6 +217,30 @@ void videoctl_tab(VideoController *self) {
     videoctl_step_cursorc(self, 4);
 }
 
+void videoctl_cursor_up(VideoController *self) {
+    if (self->cursor.y > 0) {
+        --self->cursor.y;
+    }
+}
+
+void videoctl_cursor_down(VideoController *self) {
+    if (self->cursor.y < self->height - 1) {
+        ++self->cursor.y;
+    }
+}
+
+void videoctl_cursor_left(VideoController *self) {
+    if (self->cursor.x > 0) {
+        --self->cursor.x;
+    }
+}
+
+void videoctl_cursor_right(VideoController *self) {
+    if (self->cursor.x < self->width - 1) {
+        ++self->cursor.x;
+    }
+}
+
 void videoctl_print(VideoController *self, const char *string) {
     assert(self);
 
@@ -347,7 +371,7 @@ void videoctl_set_bgcolor(VideoController *self, u32 colorIndex) {
 void videoctl_clear(VideoController *self) {
     assert(self);
     for (u32 i = 0; i < self->size; ++i) {
-        self->data[i] &= 0xFFFFFF00;
+        self->data[i] &= 0xFF000000;
     }
     videoctl_dirty_range(self, 0, self->size - 1);
     videoctl_gotoxy(self, 0, 0);
@@ -408,6 +432,81 @@ void videoctl_give_time(VideoController *self, u32 milliseconds) {
     }
 }
 
+void videoctl_handle_input(VideoController *self, SDL_Event event) {
+    assert(self);
+
+    if (!self->inputOn) {
+        return;
+    }
+
+    char c = input_get_event_char(event);
+    if (c) {
+        videoctl_printf(self, "%c", c);
+    }
+
+    videoctl_handle_control_input(self, event);
+}
+
+void videoctl_handle_control_input(VideoController *self, SDL_Event event) {
+    assert(self);
+
+    if ((event.key.keysym.mod & KMOD_CTRL) == 0) {
+        return;
+    }
+
+    SDL_Keycode key = event.key.keysym.sym;
+    bool shift = (event.key.keysym.mod & KMOD_SHIFT);
+
+    if (!shift) {
+        switch (key) {
+            case SDLK_h: videoctl_cursor_left(self); break;
+            case SDLK_l: videoctl_cursor_right(self); break;
+            case SDLK_k: videoctl_cursor_up(self); break;
+            case SDLK_j: videoctl_cursor_down(self); break;
+
+            case SDLK_b: self->textState.blink = !self->textState.blink; break;
+
+            case SDLK_MINUS:
+                if (self->textState.color > 0) {
+                    --self->textState.color;
+                } else {
+                    self->textState.color = VIDEO_COLOR_COUNT - 1;
+                }
+                break;
+
+            case SDLK_EQUALS:
+                ++self->textState.color;
+                if (self->textState.color >= VIDEO_COLOR_COUNT) {
+                    self->textState.color = 0;
+                }
+                break;
+            
+            default: break;
+        }
+    } else {
+        switch (key) {
+            case SDLK_b: self->textState.bgBlink = !self->textState.bgBlink; break;
+            
+            case SDLK_MINUS:
+                if (self->textState.bgColor > 0) {
+                    --self->textState.bgColor;
+                } else {
+                    self->textState.bgColor = VIDEO_COLOR_COUNT - 1;
+                }
+                break;
+
+            case SDLK_EQUALS:
+                ++self->textState.bgColor;
+                if (self->textState.bgColor >= VIDEO_COLOR_COUNT) {
+                    self->textState.bgColor = 0;
+                }
+                break;
+
+            default: break;
+        }
+    }
+}
+
 void videoctl_dirty_range(VideoController *self, u32 start, u32 end) {
     self->dirty = true;
     Range *range = calloc(1, sizeof(Range));
@@ -464,7 +563,7 @@ void videoctl_update_range(VideoController *self, Range range) {
         self->glyphs[i].bgRect.h = self->glyphHeight;
 
         bool showFG = (flags & GLYPH_SHOW_FG);
-        bool showBG = true; //(flags & GLYPH_SHOW_BG);
+        bool showBG = (flags & GLYPH_SHOW_BG);
         bool blinkFG = (flags & GLYPH_BLINK_FG);
         bool blinkBG = (flags & GLYPH_BLINK_BG);
 

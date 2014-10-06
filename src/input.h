@@ -5,8 +5,6 @@
 
 #include <SDL2/SDL.h>
 
-#include "game.h"
-
 char SHIFTED_CHARS[128];
 
 char input_get_event_char(SDL_Event event);

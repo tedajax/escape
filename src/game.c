@@ -209,11 +209,11 @@ void game_handle_event(Game *self, SDL_Event event) {
                 self->run = false;
             } else if (event.key.keysym.sym == SDLK_t) {
                 videoctl_color_test(self->video);
+            } else if (event.key.keysym.sym == SDLK_c) {
+                videoctl_clear(self->video);
+            } else {
+                videoctl_handle_input(self->video, event);
             }
-            // char c = input_get_event_char(event);
-            // if (c) {
-            //     videoctl_printf(self->video, "%c", c);
-            // }
             break;
         }
 
