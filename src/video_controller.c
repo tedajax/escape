@@ -175,6 +175,10 @@ void videoctl_form_feed(VideoController *self) {
         }
     }
 
+    if (self->inputMode == INPUT_MODE_PROMPT) {
+        
+    }
+
     videoctl_dirty_range(self, 0, self->size - 1);
 }
 
